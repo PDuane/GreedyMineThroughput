@@ -1,0 +1,22 @@
+For next week:
+    Implement fine-resolution algorithm and run
+    Start planning robot movement and obstacle observation
+
+Greedy algorithm for fully-known environment with no blockage
+    So far, more realistic in terms of throughput
+    Goal: maximize total throughput
+        Show that original algorithm does not optimize for throughput
+
+Benchmark 1:
+    Use original greedy algorithm work to benchmark current work
+
+Benchmark 2:
+    Number of pixel (finer resolution) down the tunnel
+    Use full raytracing algorithm
+
+Implement unknown obstacle locations
+    Make robot move from one node drop location to another
+    As it moves, it will see obstacles and update map
+        Assume obstacles are rectangular
+    Add observation map
+

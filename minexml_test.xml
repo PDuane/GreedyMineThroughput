@@ -1,0 +1,28 @@
+<mine lower_bound="(0,0)" upper_bound = "(236, 571)">
+    <!-- <tunnel p1="(5,5)" p2="(153,153)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" /> -->
+    <tunnel p1="(22,335)" p2="(22,571)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(46,335)" p2="(46,571)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(70,335)" p2="(70,571)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(94,335)" p2="(94,571)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(118,335)" p2="(118,571)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(142,335)" p2="(142,571)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(166,335)" p2="(166,571)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(190,335)" p2="(190,571)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(214,335)" p2="(214,571)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    
+    <tunnel p1="(0,357)" p2="(236,357)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(0,381)" p2="(236,381)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(0,405)" p2="(236,405)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(0,429)" p2="(236,429)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(0,453)" p2="(236,453)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(0,477)" p2="(236,477)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(0,501)" p2="(236,501)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(0,525)" p2="(236,525)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(0,549)" p2="(236,549)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <obstacle>
+        <corner p="(81, 85)" />
+        <corner p="(129, 129)" />
+        <corner p="(81, 129)" />
+        <corner p="(129, 85)" />
+    </obstacle>
+</mine>

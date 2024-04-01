@@ -1,0 +1,33 @@
+Input: M: Mine Map, L: First Node Location, N: Number of Nodes to Drop,
+    P: Transmitter Power (in dBm), V: Environment noise (in dBm),
+    B: Channel bandwidth
+    T: Throughput threshold for 1 hop before being “unconnected”
+
+throughput(p1, p2):
+    signal = rt_estimation(p1, p2)
+    snr = rt_estimation - N
+    return = B * log2(1 + 10^(snr/10))
+
+# Find the coverage of the already placed node
+For each free location x in M do
+    coverage_map[x] = throughput(x, L)
+coverage = sum(coverage_map)
+
+number of dropped nodes n = 0;
+dropped locations d = [L];
+
+for n < N:
+    best_coverage = coverage
+    For each free location x in M do:
+        best node n_b = node in d with max(throughput(d, x) / 2^d.hops)
+        if throughput(x, n_b) > T:
+            For each free location x in M do
+                temp_coverage_map[x] = max(coverage_map[x], throughput(d, x) / 2^d.hops)
+            new_coverage = sum(temp_coverage_map)
+            if (new_coverage > best_coverage):
+                Update best coverage and map of best coverage
+                best_location = x
+                best_loc_hops = n_b.hops + 1
+    coverage = best_coverage
+    coverage_map = best_coverage_map
+    Add best_location to d with best_location.hops = best_loc_hops
