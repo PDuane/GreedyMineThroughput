@@ -324,6 +324,7 @@ num_nodes = 4
 for x in range(0,len(cmap)):
     for y in range(0,len(cmap[x])):
         if (mine[x][y] == 1):
+            # if connected()
             loss = calc_loss((robot_loc[0], robot_loc[1], height), ((x+0.5)*scale, (y+0.5)*scale, height), (slope, intercept), env, mine, scale)
             rx_pow = tx_pow + loss
             rx_snr = rx_pow - noise
@@ -332,7 +333,7 @@ for x in range(0,len(cmap)):
 
 Image.fromarray(np.uint8((cmap / np.max(cmap)).transpose() * 255), 'L').show()
 
-node_locs, new_map = connected_corner_cvg(mine, cmap, scale, robot_loc, num_nodes, 3, (slope,intercept), -120, 40)
+node_locs, new_map = greedy_connected_cvg(mine, cmap, scale, robot_loc, num_nodes, 3, (slope,intercept), -120, 40)
 
 # mine = mine.transpose()
 # new_map = new_map.transpose()
