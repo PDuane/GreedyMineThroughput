@@ -19,10 +19,11 @@
     <tunnel p1="(0,501)" p2="(236,501)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
     <tunnel p1="(0,525)" p2="(236,525)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
     <tunnel p1="(0,549)" p2="(236,549)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
-    <obstacle>
-        <corner p="(81, 85)" />
-        <corner p="(129, 129)" />
-        <corner p="(81, 129)" />
-        <corner p="(129, 85)" />
-    </obstacle>
+
+    <!-- <obstacle>
+        <corner p="(60, 400)" />
+        <corner p="(180, 510)" />
+        <corner p="(60, 510)" />
+        <corner p="(180, 400)" />
+    </obstacle> -->
 </mine>

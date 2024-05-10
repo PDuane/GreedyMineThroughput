@@ -649,6 +649,64 @@ class Environment:
                         break
         
         return bmp
+    
+    def draw_basic_bitmap(self, resolution):
+        nx = round((self.upper_bound.x - self.lower_bound.x) / resolution)
+        ny = round((self.upper_bound.y - self.lower_bound.y) / resolution)
+
+        bmp = np.zeros((nx,ny))
+
+        for x in range(0, nx):
+            for y in range(0, ny):
+                lx = resolution * (x + 0.5) + self.lower_bound.x
+                ly = resolution * (y + 0.5) + self.lower_bound.y
+
+                # in_tun = False
+                in_obs = False
+                p = Point(lx, ly)
+                for o in self.obstacles:
+                    if o.inside(p):
+                        in_obs = True
+                        break
+                
+                for tun in self.tunnels:
+                    if tun.in_tunnel(Point(lx, ly)):
+                        relative = tun.get_relative_coordinate(Point(lx, ly))
+                        if (abs(relative.x) < (resolution / 2) + 0.0001):
+                            bmp[x,y] = 1
+                            break
+        
+        return bmp
+    
+    def draw_obstacle_bitmap(self, resolution):
+        nx = round((self.upper_bound.x - self.lower_bound.x) / resolution)
+        ny = round((self.upper_bound.y - self.lower_bound.y) / resolution)
+
+        bmp = np.zeros((nx,ny))
+
+        for x in range(0, nx):
+            for y in range(0, ny):
+                lx = resolution * (x + 0.5) + self.lower_bound.x
+                ly = resolution * (y + 0.5) + self.lower_bound.y
+
+                # in_tun = False
+                in_obs = False
+                p = Point(lx, ly)
+                for o in self.obstacles:
+                    if o.inside(p):
+                        in_obs = True
+                        break
+                if in_obs:
+                    continue
+                
+                for tun in self.tunnels:
+                    if tun.in_tunnel(Point(lx, ly)):
+                        relative = tun.get_relative_coordinate(Point(lx, ly))
+                        if (abs(relative.x) < (resolution / 2) + 0.0001):
+                            bmp[x,y] = 1
+                            break
+        
+        return bmp
 
 # mine = Environment().load("minexml_test.xml")
 # mine.connect_tunnels()
