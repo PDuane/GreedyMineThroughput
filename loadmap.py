@@ -348,7 +348,7 @@ class Environment:
     lower_bound:Point
     upper_bound:Point
     
-    def load(self, file):
+    def load(self, file, load_obstacles = True):
         env = []
         obs = []
         tree = et.parse(file)
@@ -399,7 +399,7 @@ class Environment:
                 sc = float(child.attrib["sig_ceil"])
 
                 env.append(Tunnel(p1_p, p2_p, w, h, ew, sw, ec, sc))
-            elif child.tag == "obstacle":
+            elif load_obstacles and child.tag == "obstacle":
                 corners = []
                 for sc in child:
                     if sc.tag == "corner":
@@ -420,6 +420,9 @@ class Environment:
         self.obstacles = obs
         return self
     
+    def add_obstacle(self, obs:Obstacle):
+        self.obstacles.append(obs)
+
     def connect_tunnels(self):
         for t in self.tunnels:
             t.find_connected(self.tunnels, save=True)

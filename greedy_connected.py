@@ -130,7 +130,7 @@ def has_los(p1:me.Point, p2:me.Point, map, scale):
 # rf_prop should be a tuple of (slope, intercept) for the rf signal strength
 #     in dB
 # Returns result in dB
-def calc_loss(n1, n2, rf_prop:tuple, env:me.Environment, map, scale):
+def calc_loss(n1, n2, rf_prop:tuple, map, scale):
     p1 = me.Point(n1[0],n1[1])
     p2 = me.Point(n2[0],n2[1])
     # dist, dc1, dc2, t1, t2 = env.get_distance(p1, p2)
@@ -201,7 +201,7 @@ def connected_corner_cvg(map, c_map, scale, loc, num_nodes, tx_pow, rf_prop, noi
                     best_node = None
                     best_sig = float("-inf")
                     for n in d_loc:
-                        loss = calc_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n[0], n[1], height), rf_prop, env, map, scale)
+                        loss = calc_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n[0], n[1], height), rf_prop, map, scale)
                         rx_pow = tx_pow + loss
                         rx_snr = rx_pow - noise
                         if (rx_snr > best_sig):
@@ -216,7 +216,7 @@ def connected_corner_cvg(map, c_map, scale, loc, num_nodes, tx_pow, rf_prop, noi
                     for x2 in range(0,len(c_map_new)):
                         for y2 in range(0,len(c_map_new[x2])):
                             if (map[x2, y2] == 1):
-                                loss = calc_loss(((x2+0.5)*scale, (y2+0.5)*scale, height), ((x+0.5)*scale, (y+0.5)*scale, height), rf_prop, env, map, scale)
+                                loss = calc_loss(((x2+0.5)*scale, (y2+0.5)*scale, height), ((x+0.5)*scale, (y+0.5)*scale, height), rf_prop, map, scale)
                                 rx_pow = tx_pow + loss
                                 rx_snr = rx_pow - noise
                                 thpt = 20*10**6 * log2(pow(10,(rx_snr / 10)) + 1)
@@ -297,7 +297,7 @@ scale = 4
 # mine = gen_map.gen_map((128, 128), 4, 20, 20, 1, (5, 5, 5, 5), psg, [])
 env = me.Environment()
 env.load("minexml_test.xml")
-mine = env.draw_bitmap(scale)
+mine = env.draw_basic_bitmap(scale)
 cmap = np.zeros(np.shape(mine))
 
 # Image.fromarray(np.uint8(cmap.transpose() * 255), 'L').show()
@@ -319,22 +319,26 @@ tx_pow = 3 # dBm
 
 robot_loc = (22, 357)
 height = 1
-num_nodes = 46
+num_nodes = 4
 
 for x in range(0,len(cmap)):
     for y in range(0,len(cmap[x])):
         if (mine[x][y] == 1):
-            if connected((scale*(x+0.5),scale*(y+0.5)), robot_loc, comm_dist, mine, scale):
-                cmap[x][y] = 1
+            loss = calc_loss((robot_loc[0], robot_loc[1], height), ((x+0.5)*scale, (y+0.5)*scale, height), (slope, intercept), mine, scale)
+            rx_pow = tx_pow + loss
+            rx_snr = rx_pow - noise
+            thpt = 20*10**6 * log2(pow(10,(rx_snr / 10)) + 1)
+            # if connected((scale*(x+0.5),scale*(y+0.5)), robot_loc, comm_dist, mine, scale):
+            cmap[x][y] = thpt
             # loss = calc_loss((robot_loc[0], robot_loc[1], height), ((x+0.5)*scale, (y+0.5)*scale, height), (slope, intercept), env, mine, scale)
             # rx_pow = tx_pow + loss
             # rx_snr = rx_pow - noise
             # thpt = 20*10**6 * log2(1 + pow(10,(rx_snr / 10)))
             # cmap[x][y] = thpt
 
-Image.fromarray(np.uint8((cmap / np.max(cmap)).transpose() * 255), 'L').show()
+# Image.fromarray(np.uint8((cmap / np.max(cmap)).transpose() * 255), 'L').show()
 
-node_locs, new_map = connected_corner_cvg(mine, cmap, scale, robot_loc, num_nodes, 3, (slope,intercept), -120, 40)
+node_locs, new_map = connected_corner_cvg(mine, cmap, scale, robot_loc, num_nodes, pow(10, (3/10))/1000, (slope, intercept), -120, 30)
 
 # mine = mine.transpose()
 # new_map = new_map.transpose()
