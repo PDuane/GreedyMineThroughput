@@ -81,13 +81,13 @@ def has_los(c1, c2, map):
 def dist(c1, c2):
     return sqrt((c2[0]-c1[0])**2 + (c2[1]-c1[1])**2)
 
-def connected(n1, n2, comm_dist, map):
+def connected(n1, n2, comm_dist, map, scale):
     # if dist(n1, n2) < comm_dist and has_los(n1, n2, map):
     #     pass
-    n1_int = (round(n1[0]), round(n1[1]))
-    n2_int = (round(n2[0]), round(n2[1]))
+    n1_int = (round(n1[0] / scale), round(n1[1] / scale))
+    n2_int = (round(n2[0] / scale), round(n2[1] / scale))
     is_free = map[n1_int[0],n1_int[1]] == 1 and map[n2_int[0],n2_int[1]] == 1
-    return is_free and dist(n1, n2) < comm_dist and has_los(n1, n2, map)
+    return is_free and dist(n1, n2) < comm_dist and has_los(n1, n2, map, scale)
 
 def has_los(p1:me.Point, p2:me.Point, map, scale):
     px1 = (floor(p1.x / scale), floor(p1.y / scale))
@@ -237,7 +237,7 @@ def connected_corner_cvg(map, c_map, scale, loc, num_nodes, tx_pow, rf_prop, noi
         dropped += 1
     return d_loc, c_map
 
-def greedy_connected_cvg(map, c_map, loc, num_nodes, comm_dist):
+def greedy_connected_cvg(map, c_map, loc, num_nodes, comm_dist, scale):
     dropped = 0
     d_loc = [loc]
 
@@ -255,7 +255,7 @@ def greedy_connected_cvg(map, c_map, loc, num_nodes, comm_dist):
                 if map[x,y] == 1:
                     con = False
                     for n in d_loc:
-                        if connected((x, y), n, comm_dist, map):
+                        if connected((scale * (x + 0.5), scale * (y + 0.5)), (n[0], n[1]), comm_dist, map, scale):
                             con = True
                             break
                     if not con:
@@ -268,7 +268,7 @@ def greedy_connected_cvg(map, c_map, loc, num_nodes, comm_dist):
                     for x2 in range(0,len(c_map_new)):
                         for y2 in range(0,len(c_map_new[x2])):
                             if (map[x2,y2] == 1):
-                                if connected((x2, y2), (x,y), comm_dist, map) or c_map[x2,y2] == 1:
+                                if connected((scale*(x2+0.5), scale*(y2+0.5)), (scale*(x+0.5), scale*(y+0.5)), comm_dist, map, scale) or c_map[x2,y2] == 1:
                                     c_map_new[x2][y2] = 1
                     
                     # Image.fromarray(np.uint8(c_map_new.transpose() * 255), 'L').show()
@@ -281,7 +281,7 @@ def greedy_connected_cvg(map, c_map, loc, num_nodes, comm_dist):
         d_loc.append(new_loc)
         for x2 in range(0,len(c_map_new)):
             for y2 in range(0,len(c_map_new[x2])):
-                if connected((x2, y2), new_loc, comm_dist, map):
+                if connected((scale*(x2+0.5), scale*(y2+0.5)), (scale*(new_loc[0]+0.5),scale*(new_loc[1]+0.5)), comm_dist, map, scale):
                     c_map[x2][y2] = 1
         dropped += 1
         c_map = c_map_new
@@ -307,7 +307,7 @@ slope_tun = me.Tunnel(me.Point(0, -2), me.Point(0, 602), tun_ref.width, tun_ref.
 
 slope, intercept = rt_slope.get_rtslope(slope_tun, 2.4e9, tun_ref.height/2)
 l = me.Line(me.Point(0, intercept), me.Point(600, intercept + 600 * slope))
-comm_dist = l.get_x(-80, True)
+comm_dist = l.get_x(-80, True) / scale
 
 # rx_pow = tx_pow * loss
 
@@ -319,21 +319,22 @@ tx_pow = 3 # dBm
 
 robot_loc = (22, 357)
 height = 1
-num_nodes = 4
+num_nodes = 46
 
 for x in range(0,len(cmap)):
     for y in range(0,len(cmap[x])):
         if (mine[x][y] == 1):
-            # if connected()
-            loss = calc_loss((robot_loc[0], robot_loc[1], height), ((x+0.5)*scale, (y+0.5)*scale, height), (slope, intercept), env, mine, scale)
-            rx_pow = tx_pow + loss
-            rx_snr = rx_pow - noise
-            thpt = 20*10**6 * log2(1 + pow(10,(rx_snr / 10)))
-            cmap[x][y] = thpt
+            if connected((scale*(x+0.5),scale*(y+0.5)), robot_loc, comm_dist, mine, scale):
+                cmap[x][y] = 1
+            # loss = calc_loss((robot_loc[0], robot_loc[1], height), ((x+0.5)*scale, (y+0.5)*scale, height), (slope, intercept), env, mine, scale)
+            # rx_pow = tx_pow + loss
+            # rx_snr = rx_pow - noise
+            # thpt = 20*10**6 * log2(1 + pow(10,(rx_snr / 10)))
+            # cmap[x][y] = thpt
 
 Image.fromarray(np.uint8((cmap / np.max(cmap)).transpose() * 255), 'L').show()
 
-node_locs, new_map = greedy_connected_cvg(mine, cmap, scale, robot_loc, num_nodes, 3, (slope,intercept), -120, 40)
+node_locs, new_map = connected_corner_cvg(mine, cmap, scale, robot_loc, num_nodes, 3, (slope,intercept), -120, 40)
 
 # mine = mine.transpose()
 # new_map = new_map.transpose()
