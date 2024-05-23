@@ -424,65 +424,65 @@ obs_mine = env.draw_obstacle_bitmap(scale)
 
 # Empty the obstacle array so the algorithm works only
 #     with discovered obstacles
-env.obstacles = []
+# env.obstacles = []
 
-sl = (22,357)
-el = ((53 * scale + 2), 357 + ((48 * scale + 2)))
+# sl = (22,357)
+# el = ((53 * scale + 2), 357 + ((48 * scale + 2)))
 
-path = []
-for i in range(sl[1], el[1]):
-    path.append((sl[0], i))
-for i in range(sl[0], el[0]):
-    path.append((i, el[1]))
-for i in range(el[1], sl[1], -1):
-    path.append((el[0], i))
-for i in range(el[0], sl[0], -1):
-    path.append((i, sl[1]))
+# path = []
+# for i in range(sl[1], el[1]):
+#     path.append((sl[0], i))
+# for i in range(sl[0], el[0]):
+#     path.append((i, el[1]))
+# for i in range(el[1], sl[1], -1):
+#     path.append((el[0], i))
+# for i in range(el[0], sl[0], -1):
+#     path.append((i, sl[1]))
 
-pathmap = np.dstack((mine, mine, mine))
-for p in path:
-    pathmap[floor(p[0] / scale), floor(p[1] / scale), 0] = 0
-    pathmap[floor(p[0] / scale), floor(p[1] / scale), 1] = 0
-    pathmap[floor(p[0] / scale), floor(p[1] / scale), 2] = 1
+# pathmap = np.dstack((mine, mine, mine))
+# for p in path:
+#     pathmap[floor(p[0] / scale), floor(p[1] / scale), 0] = 0
+#     pathmap[floor(p[0] / scale), floor(p[1] / scale), 1] = 0
+#     pathmap[floor(p[0] / scale), floor(p[1] / scale), 2] = 1
 
-pathmap *= 255
-img_path = Image.fromarray(np.uint8(pathmap.swapaxes(0,1)))
-img_path.show()
+# pathmap *= 255
+# img_path = Image.fromarray(np.uint8(pathmap.swapaxes(0,1)))
+# img_path.show()
 
-og = np.copy(mine)
+# og = np.copy(mine)
 
-for p in path:
-    mine = detect_obstacle((floor(p[0] / scale), floor(p[1] / scale)), 50, mine, obs_mine)
+# for p in path:
+#     mine = detect_obstacle((floor(p[0] / scale), floor(p[1] / scale)), 50, mine, obs_mine)
 
-obs_locs = []
-for x in range(len(mine)):
-    for y in range(len(mine[x])):
-        if og[x,y] - mine[x,y] == 1:
-            obs_locs.append((x,y))
-        # mine[x,y] = new_env[x,y]
+# obs_locs = []
+# for x in range(len(mine)):
+#     for y in range(len(mine[x])):
+#         if og[x,y] - mine[x,y] == 1:
+#             obs_locs.append((x,y))
+#         # mine[x,y] = new_env[x,y]
 
-obs_dif = np.dstack((mine, obs_mine * mine, obs_mine * mine))
-for p in path:
-    obs_dif[floor(p[0] / scale), floor(p[1] / scale), 0] = 0
-    obs_dif[floor(p[0] / scale), floor(p[1] / scale), 1] = 0
-    obs_dif[floor(p[0] / scale), floor(p[1] / scale), 2] = 1
+# obs_dif = np.dstack((mine, obs_mine * mine, obs_mine * mine))
+# for p in path:
+#     obs_dif[floor(p[0] / scale), floor(p[1] / scale), 0] = 0
+#     obs_dif[floor(p[0] / scale), floor(p[1] / scale), 1] = 0
+#     obs_dif[floor(p[0] / scale), floor(p[1] / scale), 2] = 1
 
-obs_dif *= 255
-img_dif = Image.fromarray(np.uint8(obs_dif.swapaxes(0,1)))
-img_dif.show()
+# obs_dif *= 255
+# img_dif = Image.fromarray(np.uint8(obs_dif.swapaxes(0,1)))
+# img_dif.show()
 
-for o in obs_locs:
-    tun_width = env.tunnels[0].width / 2
-    x_map = (o[0] + 0.5) * scale
-    y_map = (o[1] + 0.5) * scale
-    new_obs = me.Obstacle([
-        me.Point(x_map - tun_width, y_map - tun_width),
-        me.Point(x_map + tun_width, y_map + tun_width),
-        me.Point(x_map - tun_width, y_map + tun_width),
-        me.Point(x_map + tun_width, y_map - tun_width)
-    ])
+# for o in obs_locs:
+#     tun_width = env.tunnels[0].width / 2
+#     x_map = (o[0] + 0.5) * scale
+#     y_map = (o[1] + 0.5) * scale
+#     new_obs = me.Obstacle([
+#         me.Point(x_map - tun_width, y_map - tun_width),
+#         me.Point(x_map + tun_width, y_map + tun_width),
+#         me.Point(x_map - tun_width, y_map + tun_width),
+#         me.Point(x_map + tun_width, y_map - tun_width)
+#     ])
 
-    env.add_obstacle(new_obs)
+#     env.add_obstacle(new_obs)
 
 # pathmap = np.dstack((mine, mine, mine))
 
@@ -490,12 +490,13 @@ for o in obs_locs:
 # img_path = Image.fromarray(np.uint8(pathmap.swapaxes(0,1)))
 # img_path.show()
 
-Image.fromarray(np.uint8(env.draw_obstacle_bitmap(scale).transpose() * 255), 'L').show()
+# Image.fromarray(np.uint8(env.draw_obstacle_bitmap(scale).transpose() * 255), 'L').show()
+
 env.obstacles = []
 
-for x in range(len(mine)):
-    for y in range(len(mine[0])):
-        mine[x,y] = unmod[x,y]
+# for x in range(len(mine)):
+#     for y in range(len(mine[0])):
+#         mine[x,y] = unmod[x,y]
 
 # c_img = np.zeros(np.shape(mine))
 # draw_circle([floor(118 / scale), floor(405 / scale)], 10, c_img)
@@ -547,14 +548,14 @@ for i in range(num_nodes):
         new_node, cmap = predict_node(mine, cmap, scale, dropped_nodes, 3, noise, 350*10**6, env)
         print("\t\tTook {}s to predict node location".format(time.time() - timer3))
         path, length = pathfind_bfs(mine, robot_loc, [floor(new_node.x / scale), floor(new_node.y / scale)])
-        path_img = np.repeat(mine[:,:,np.newaxis], 3, axis=2)
-        for l in range(len(path)):
-            path_img[path[l][0], path[l][1], 0] = 0
-            path_img[path[l][0], path[l][1], 1] = 0
-            path_img[path[l][0], path[l][1], 2] = 1
-        path_img *= 255
-        path_img = Image.fromarray(np.uint8(path_img.swapaxes(0,1)))
-        path_img.show()
+        # path_img = np.repeat(mine[:,:,np.newaxis], 3, axis=2)
+        # for l in range(len(path)):
+        #     path_img[path[l][0], path[l][1], 0] = 0
+        #     path_img[path[l][0], path[l][1], 1] = 0
+        #     path_img[path[l][0], path[l][1], 2] = 1
+        # path_img *= 255
+        # path_img = Image.fromarray(np.uint8(path_img.swapaxes(0,1)))
+        # path_img.show()
 
         for l in range(len(path)):
             robot_loc = path[l]
@@ -584,14 +585,14 @@ for i in range(num_nodes):
                         new_node, cmap = predict_node(mine, cmap, scale, dropped_nodes, 3, noise, 350*10**6, env)
                         path, length = pathfind_bfs(mine, robot_loc, [floor(new_node.x / scale), floor(new_node.y / scale)])
 
-                        path_img = np.repeat(mine[:,:,np.newaxis], 3, axis=2)
-                        for l in range(len(path)):
-                            path_img[path[l][0], path[l][1], 0] = 0
-                            path_img[path[l][0], path[l][1], 1] = 0
-                            path_img[path[l][0], path[l][1], 2] = 1
-                        path_img *= 255
-                        path_img = Image.fromarray(np.uint8(path_img.swapaxes(0,1)))
-                        path_img.show()
+                        # path_img = np.repeat(mine[:,:,np.newaxis], 3, axis=2)
+                        # for l in range(len(path)):
+                        #     path_img[path[l][0], path[l][1], 0] = 0
+                        #     path_img[path[l][0], path[l][1], 1] = 0
+                        #     path_img[path[l][0], path[l][1], 2] = 1
+                        # path_img *= 255
+                        # path_img = Image.fromarray(np.uint8(path_img.swapaxes(0,1)))
+                        # path_img.show()
 
                         l = -1
         if np.sum(mine) == sum_before_path:
@@ -601,23 +602,26 @@ for i in range(num_nodes):
     robot_loc = [floor(new_node.x / scale), floor(new_node.y / scale)]
     print("\tTook {}s to drop node".format(time.time() - timer2))
 
+    # -------------------------------------------------------------
     # Save image of new coverage map
-    cmap_img = cmap / np.max(cmap)
-    cmap_inv = np.multiply(1 - cmap_img, mine)
+    # -------------------------------------------------------------
+    # cmap_img = cmap / np.max(cmap)
+    # cmap_inv = np.multiply(1 - cmap_img, mine)
 
-    image = np.dstack((cmap_inv, cmap_img, np.zeros(np.shape(cmap_img))))
+    # image = np.dstack((cmap_inv, cmap_img, np.zeros(np.shape(cmap_img))))
 
-    for n in dropped_nodes:
-        image[floor(n.x / scale),floor(n.y / scale),0] = 0
-        image[floor(n.x / scale),floor(n.y / scale),1] = 0
-        image[floor(n.x / scale),floor(n.y / scale),2] = 1
+    # for n in dropped_nodes:
+    #     image[floor(n.x / scale),floor(n.y / scale),0] = 0
+    #     image[floor(n.x / scale),floor(n.y / scale),1] = 0
+    #     image[floor(n.x / scale),floor(n.y / scale),2] = 1
 
 
-    image *= 255
+    # image *= 255
 
-    img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
-    img_gen.show()
-    img_gen.save("progress_cmap-{}.png".format(i))
+    # img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
+    # img_gen.show()
+    # img_gen.save("progress_cmap-{}.png".format(i))
+    # -------------------------------------------------------------
 
 print("Took {}s to drop all nodes".format(time.time() - timer1))
 
@@ -628,10 +632,10 @@ cmap_inv = np.multiply(1 - cmap, mine)
 
 image = np.dstack((cmap_inv, cmap, np.zeros(np.shape(cmap))))
 
-obs_map = np.dstack((unmod, mine * unmod, unmod))
-obs_map *= 255
-img_obs = Image.fromarray(np.uint8(obs_map.swapaxes(0,1)))
-img_obs.show()
+# obs_map = np.dstack((unmod, mine * unmod, unmod))
+# obs_map *= 255
+# img_obs = Image.fromarray(np.uint8(obs_map.swapaxes(0,1)))
+# img_obs.show()
 
 print("Node Locations: ")
 for n in dropped_nodes:
