@@ -365,11 +365,23 @@ def predict_node(map, c_map, scale, dropped, tx_pow, noise, onehop_thpt, rf_prop
 
 c1 = (7.5,7.5)
 c2 = (5+2+4*24,5+2+3*24)
-scale = 4
 
 print("Loading environment")
 env = me.Environment()
-env.load("minexml_test.xml")
+
+# env.load("minexml_test.xml")  # For squre mine
+# env.load("SimRig.xml")        # For Simulation Rig mine
+env.load("ComplexRP.xml")         # For Complex room and pillar
+# env.load("Mine1.xml")         # For Complex abnormal mine
+
+# rx_loc = Node((22,357,1), 0, float("inf"))  # For squre mine
+# rx_loc = Node((255,53,1), 0, float("inf"))  # For Simulation Rig mine
+rx_loc = Node((19,205,1), 0, float("inf"))  # For Complex room and pillar
+# rx_loc = Node((383,324,1), 0, float("inf"))  # For Complex abnormal mine
+
+scale = 4                     # For square and simulation rig mines
+# scale = 6                     # For comple mines
+
 mine = env.draw_basic_bitmap(scale)
 unmod = np.copy(mine)
 obs_mine = env.draw_obstacle_bitmap(scale)
@@ -392,7 +404,7 @@ noise = -120 # dBm
 tx_pow = 3 # dBm
 bw = 20 * 10**6 # Hz
 
-rx_loc = Node((22,357,1), 0, float("inf"))
+# rx_loc = Node((22,357,1), 0, float("inf"))
 robot_loc = [floor(rx_loc.x / scale), floor(rx_loc.y / scale)]
 height = 1
 num_nodes = 4
@@ -492,4 +504,4 @@ image *= 255
 
 img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
 img_gen.show()
-img_gen.save("GreedyFull_FinerResolution2.png")
+img_gen.save("GreedySimple_FinerResolution2.png")

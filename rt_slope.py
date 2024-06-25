@@ -76,9 +76,10 @@ def get_rtslope(t:me.Tunnel, freq, height):
         rx = (0, y, height)
         pows.append(10*log10(rt_tunnel(t, tx, rx, freq)))
     
-    plt.plot(ys,pows)
-
+    # plt.plot(ys,pows)
     slope, intercept, r_value, p_value, std_err = stats.linregress(ys,pows)
+    # plt.plot(ys, ys * slope + intercept)
+    # plt.show()
     return (slope, intercept)
 
 
