@@ -406,9 +406,9 @@ if __name__ == "__main__":
         ["ComplexRP", (19,205), 4, 10],
         ["minexml_test", (22,357), 4, 4],
         ["minexml_obstacle", (22,357), 4, 4],
-        ["SimRig", (22,357), 4, 4],
-        ["SimRig_Obstacle", (22,357), 4, 4],
-        ["SimRig", (22,357), 4, 10]
+        ["SimRig", (7,101), 4, 4],
+        ["SimRig_Obstacle", (7,101), 4, 4],
+        ["SimRig", (7,101), 4, 10]
     ]
 
     avg_thpt_fname = "./binary_coverage_averages.txt"

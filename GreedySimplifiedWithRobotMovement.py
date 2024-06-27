@@ -115,11 +115,13 @@ def pathfind_bfs(env_map, start, dest):
         for y in range(len(env[x])):
             env[x,y] = env_map[x,y]
     queue = [[start.copy(), []]]
+    visited = []
     while (len(queue) > 0):
         item = queue.pop(0)
         loc = item[0]
         path = item[1].copy()
         path.append(loc)
+        visited.append(loc)
         if loc[0] == dest[0] and loc[1] == dest[1]:
             return path, len(path)
         else:
@@ -130,10 +132,24 @@ def pathfind_bfs(env_map, start, dest):
                 [loc[0], loc[1] - 1]
                 ]
             for o in options:
+                # has_been_visited = False
+                # for v in visited:
+                #     if o[0] == v[0] and o[1] == v[1]:
+                #         has_been_visited = True
+                #         break
+                # if has_been_visited:
+                #     continue
+
                 if o[0] >= 0 and o[1] >= 0:
                     if o[0] < len(env) and o[1] < len(env[0]):
                         if env[o[0], o[1]] == 1:
-                            queue.append([o, path.copy()])
+                            inQueue = False
+                            for item in queue:
+                                if item[0][0] == o[0] and item[0][1] == o[1]:
+                                    inQueue = True
+                                    break
+                            if not inQueue:
+                                queue.append([o, path.copy()])
 
             env[loc[0], loc[1]] = 0
     return [], 0
@@ -377,9 +393,9 @@ if __name__ == "__main__":
         ["ComplexRP", (19,205), 4, 10],
         ["minexml_test", (22,357), 4, 4],
         ["minexml_obstacle", (22,357), 4, 4],
-        ["SimRig", (22,357), 4, 4],
-        ["SimRig_Obstacle", (22,357), 4, 4],
-        ["SimRig", (22,357), 4, 10]
+        ["SimRig", (7,101), 4, 4],
+        ["SimRig_Obstacle", (7,101), 4, 4],
+        ["SimRig", (7,101), 4, 10]
     ]
 
     avg_thpt_fname = "./approx_coverage_averages.txt"
