@@ -6,8 +6,9 @@ from matplotlib import pyplot as plt
 import loadmap as me
 import rt_slope
 import raytrace as rt
-import sys
 import time
+import os.path
+from GreedyWithRobotMovement import calc_loss as rt_loss
 
 CORNER_THRESHOLD = 30
 CORNER_LOSS = 30
@@ -388,208 +389,295 @@ def predict_node(map, c_map, scale, dropped, c_range):
                         for x2 in range(len(c_map_new)):
                             for y2 in range(len(c_map_new[0])):
                                 c_map_best[x2,y2] = c_map_new[x2,y2]
-    
-    # cmap_img = c_map_best / np.max(c_map_best)
-    # cmap_inv = np.multiply(1 - cmap_img, mine)
-
-    # image = np.dstack((cmap_inv, cmap_img, np.zeros(np.shape(cmap_img))))
-
-    # for n in dropped_nodes:
-    #     image[floor(n.x / scale),floor(n.y / scale),0] = 0
-    #     image[floor(n.x / scale),floor(n.y / scale),1] = 0
-    #     image[floor(n.x / scale),floor(n.y / scale),2] = 1
-
-    # image[floor(new_loc.x / scale),floor(new_loc.y / scale),0] = 1
-    # image[floor(new_loc.x / scale),floor(new_loc.y / scale),1] = 0
-    # image[floor(new_loc.x / scale),floor(new_loc.y / scale),2] = 1
-
-    # image *= 255
-
-    # img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
-    # img_gen.show()
     return new_loc, c_map_best
-                    
-                    # count = np.sum(c_map)
 
-                    # cmap_img = c_map / np.max(c_map)
-                    # cmap_inv = np.multiply(1 - cmap_img, mine)
 
-                    # image = np.dstack((cmap_inv, cmap_img, np.zeros(np.shape(cmap_img))))
+if __name__ == "__main__":
+    c1 = (7.5,7.5)
+    c2 = (5+2+4*24,5+2+3*24)
 
-                    # for n in dropped_nodes:
-                    #     image[floor(n.x / scale),floor(n.y / scale),0] = 0
-                    #     image[floor(n.x / scale),floor(n.y / scale),1] = 0
-                    #     image[floor(n.x / scale),floor(n.y / scale),2] = 1
+    # Format:
+    #   [run/file name, starting node coordinate, scale, number of nodes]
+    cases = [
+        ["ComplexRP", (19,205), 4, 4],
+        ["ComplexRP_Case1", (19,205), 4, 4],
+        ["ComplexRP_Case2", (19,205), 4, 4],
+        ["ComplexRP_Case3", (19,205), 4, 4],
+        ["ComplexRP", (19,205), 4, 10],
+        ["minexml_test", (22,357), 4, 4],
+        ["minexml_obstacle", (22,357), 4, 4],
+        ["SimRig", (22,357), 4, 4],
+        ["SimRig_Obstacle", (22,357), 4, 4],
+        ["SimRig", (22,357), 4, 10]
+    ]
 
-                    # image[x,y,0] = 1
-                    # image[x,y,1] = 0
-                    # image[x,y,2] = 1
+    avg_thpt_fname = "./binary_coverage_averages.txt"
+    has_of_been_opened = False
 
-                    # image *= 255
+    for c in cases:
+        print("Running simulation for {}, {} nodes".format(c[0], c[3]))
+        print("Loading environment")
+        env = me.Environment()
 
-                    # img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
-                    # img_gen.show()
-                    # loss = calc_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), rf_prop, map, scale)
-                    # if (loss == float("-inf")):
-                    #     thpt = 0
-                    # else:
-                    #     rx_pow = tx_pow + loss
-                    #     rx_snr = rx_pow - noise
-                    #     thpt = bw * log2(1 + pow(10,(rx_snr / 10))) / pow(2, n.hops)
+        # env.load("minexml_test.xml")  # For squre mine
+        # env.load("SimRig.xml")        # For Simulation Rig mine
+        # env.load("ComplexRP.xml")         # For Complex room and pillar
+        # env.load("Mine1.xml")         # For Complex abnormal mine
+        env.load("{}.xml".format(c[0]))
 
-                    # if (count > best_sig):
-                    #     best_sig = count
-                    #     best_node = n
+        # rx_loc = Node((22,357,1), 0, float("inf"))  # For squre mine
+        # rx_loc = Node((255,53,1), 0, float("inf"))  # For Simulation Rig mine
+        # rx_loc = Node((19,205,1), 0, float("inf"))  # For Complex room and pillar
+        # rx_loc = Node((383,324,1), 0, float("inf"))  # For Complex abnormal mine
+        rx_loc = Node((c[1][0],c[1][1],1), 0, float("inf"))
+
+        # scale = 4                     # For square and simulation rig mines
+        # scale = 6                     # For comple mines
+        scale = c[2]
+
+        mine = env.draw_basic_bitmap(scale)
+        unmod = np.copy(mine)
+        obs_mine = env.draw_obstacle_bitmap(scale)
+
+        print("Estimating path loss constant:")
+        tun_ref:me.Tunnel = env.tunnels[0]
+        slope_tun = me.Tunnel(me.Point(0, -2), me.Point(0, 602), tun_ref.width, tun_ref.height, tun_ref.eps_wall, tun_ref.sig_wall, tun_ref.eps_ceil, tun_ref.sig_ceil)
+
+        slope, intercept = rt_slope.get_rtslope(slope_tun, 2.4e9, tun_ref.height/2)
+
+        com_range = (-120 - intercept) / slope
+
+        l = me.Line(me.Point(0, intercept), me.Point(600, intercept + 600 * slope))
+        print("\tPath Loss Line: {}*d + {}".format(slope, intercept))
+
+        print("\tRange: {}".format(com_range))
+
+        # Empty the obstacle array so the algorithm works only
+        #     with discovered obstacles
+        env.obstacles = []
+
+        print("Performing Setup")
+        # Define environment and channel parameters
+        noise = -120 # dBm
+        tx_pow = 3 # dBm
+        bw = 20 * 10**6 # Hz
+
+        # rx_loc = Node((22,357,1), 0, float("inf"))
+        robot_loc = [floor(rx_loc.x / scale), floor(rx_loc.y / scale)]
+        height = 1
+        num_nodes = c[3]
+
+        dropped_nodes = [rx_loc]
+
+        cmap = np.zeros(np.shape(mine))
+
+        print("Starting Simulation")
+        timer1 = time.time()
+        for i in range(num_nodes):
+            timer2 = time.time()
+            
+            while True:
+                sum_before_path = np.sum(mine)
+                findNewPath = True
+                while findNewPath:
+                    findNewPath = False
+                    timer3 = time.time()
+                    # new_node, cmap = predict_node(mine, cmap, scale, dropped_nodes, 3, noise, 350*10**6, (slope, intercept), env)
+                    new_node, cmap = predict_node(mine, cmap, scale, dropped_nodes, com_range)
+                    print("\t\tTook {}s to predict node location".format(time.time() - timer3))
+
+                    path, length = pathfind_bfs(mine, robot_loc, [floor(new_node.x / scale), floor(new_node.y / scale)])
+
+                    for l in range(len(path)):
+                        robot_loc = path[l]
+                        sum_before = np.sum(mine)
+                        new_env = detect_obstacle(robot_loc, 50, np.copy(mine), obs_mine)
+                        if not np.sum(new_env) == sum_before:
+                            obs_locs = []
+                            for x in range(len(new_env)):
+                                for y in range(len(new_env[x])):
+                                    if mine[x,y] - new_env[x,y] == 1:
+                                        obs_locs.append((x,y))
+                                    mine[x,y] = new_env[x,y]
+
+                            for o in obs_locs:
+                                tun_width = env.tunnels[0].width / 2
+                                x_map = (o[0] + 0.5) * scale
+                                y_map = (o[1] + 0.5) * scale
+                                new_obs = me.Obstacle([
+                                    me.Point(x_map - tun_width, y_map - tun_width),
+                                    me.Point(x_map + tun_width, y_map + tun_width),
+                                    me.Point(x_map - tun_width, y_map + tun_width),
+                                    me.Point(x_map + tun_width, y_map - tun_width)
+                                ])
+                                env.add_obstacle(new_obs)
+                            for p in path:
+                                if mine[p[0], p[1]] == 0 or l == len(path) - 1:
+                                    findNewPath = True
+                                    break
+                            
+                            if findNewPath:
+                                break
+                                # sum_before_path = np.sum(mine)
+                                # timer3 = time.time()
+                                # new_node, cmap = predict_node(mine, cmap, scale, dropped_nodes, com_range)
+                                # print("\t\tTook {}s to predict node location".format(time.time() - timer3))
+                                # path, length = pathfind_bfs(mine, robot_loc, [floor(new_node.x / scale), floor(new_node.y / scale)])
+
+                                # l = -1
+                if np.sum(mine) == sum_before_path:
+                    break
                 
-                # if best_sig >= onehop_thpt:
-    # return new_loc, c_map_best
+            dropped_nodes.append(new_node)
+            robot_loc = [floor(new_node.x / scale), floor(new_node.y / scale)]
+            print("\tTook {}s to drop node".format(time.time() - timer2))
+
+            # -------------------------------------------------------------
+            # Save image of new coverage map
+            # -------------------------------------------------------------
+            # cmap_img = cmap / np.max(cmap)
+            # cmap_inv = np.multiply(1 - cmap_img, mine)
+
+            # image = np.dstack((cmap_inv, cmap_img, np.zeros(np.shape(cmap_img))))
+
+            # for n in dropped_nodes:
+            #     image[floor(n.x / scale),floor(n.y / scale),0] = 0
+            #     image[floor(n.x / scale),floor(n.y / scale),1] = 0
+            #     image[floor(n.x / scale),floor(n.y / scale),2] = 1
 
 
-c1 = (7.5,7.5)
-c2 = (5+2+4*24,5+2+3*24)
+            # image *= 255
 
-print("Loading environment")
-env = me.Environment()
+            # img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
+            # img_gen.show()
+            # img_gen.save("progress_cmap-{}.png".format(i))
+            # -------------------------------------------------------------
 
-# env.load("minexml_test.xml")  # For squre mine
-# env.load("SimRig.xml")        # For Simulation Rig mine
-env.load("ComplexRP.xml")         # For Complex room and pillar
-# env.load("Mine1.xml")         # For Complex abnormal mine
+        print("Took {}s to drop all nodes".format(time.time() - timer1))
 
-# rx_loc = Node((22,357,1), 0, float("inf"))  # For squre mine
-# rx_loc = Node((255,53,1), 0, float("inf"))  # For Simulation Rig mine
-rx_loc = Node((19,205,1), 0, float("inf"))  # For Complex room and pillar
-# rx_loc = Node((383,324,1), 0, float("inf"))  # For Complex abnormal mine
+        # Save observed map with the binary coverage method
+        cmap = cmap / np.max(cmap)
+        cmap_inv = np.multiply(1 - cmap, mine)
 
-scale = 4                     # For square and simulation rig mines
-# scale = 6                     # For comple mines
+        image = np.dstack((cmap_inv, cmap, np.zeros(np.shape(cmap))))
 
-mine = env.draw_basic_bitmap(scale)
-unmod = np.copy(mine)
-obs_mine = env.draw_obstacle_bitmap(scale)
+        for n in dropped_nodes:
+            image[floor(n.x / scale),floor(n.y / scale),0] = 0
+            image[floor(n.x / scale),floor(n.y / scale),1] = 0
+            image[floor(n.x / scale),floor(n.y / scale),2] = 1
 
-print("Estimating path loss constant:")
-tun_ref:me.Tunnel = env.tunnels[0]
-slope_tun = me.Tunnel(me.Point(0, -2), me.Point(0, 602), tun_ref.width, tun_ref.height, tun_ref.eps_wall, tun_ref.sig_wall, tun_ref.eps_ceil, tun_ref.sig_ceil)
 
-slope, intercept = rt_slope.get_rtslope(slope_tun, 2.4e9, tun_ref.height/2)
+        image *= 255
 
-com_range = (-120 - intercept) / slope
+        img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
+        # img_gen.show()
+        print("Saving observed map with binary coverage for {}, {} nodes".format(c[0], c[3]))
+        img_gen.save("binary_binary-observed_{}-{}nodes.png".format(c[0], c[3]))
 
-l = me.Line(me.Point(0, intercept), me.Point(600, intercept + 600 * slope))
-print("\tPath Loss Line: {}*d + {}".format(slope, intercept))
 
-print("\tRange: {}".format(com_range))
+        # Save the actual coverage map with placements using binary coverage method
+        cmap = np.zeros(np.shape(obs_mine))
+        for x in range(0,len(cmap)):
+            for y in range(0,len(cmap[x])):
+                if (obs_mine[x][y] == 1):
+                    # best_thpt = 0
+                    for n in dropped_nodes:
+                        los = has_los((n.x, n.y), ((x+0.5)*scale, (y+0.5)*scale), obs_mine, scale)
+                        inrange = sqrt(pow(n.x - (x+0.5)*scale, 2) + pow(n.y - (y+0.5)*scale, 2)) < com_range
+                        if los and inrange:
+                            cmap[x][y] = 1
+                            break
 
-# Empty the obstacle array so the algorithm works only
-#     with discovered obstacles
-env.obstacles = []
+        # Save actual map with binary coverage method
+        # print("Saving actual map with binary coverage_{}.png".format(c[0]))
+        cmap = cmap / np.max(cmap)
+        cmap_inv = np.multiply(1 - cmap, obs_mine)
 
-print("Performing Setup")
-# Define environment and channel parameters
-noise = -120 # dBm
-tx_pow = 3 # dBm
-bw = 20 * 10**6 # Hz
+        image = np.dstack((cmap_inv, cmap, np.zeros(np.shape(cmap))))
 
-# rx_loc = Node((22,357,1), 0, float("inf"))
-robot_loc = [floor(rx_loc.x / scale), floor(rx_loc.y / scale)]
-height = 1
-num_nodes = 4
+        for n in dropped_nodes:
+            image[floor(n.x / scale),floor(n.y / scale),0] = 0
+            image[floor(n.x / scale),floor(n.y / scale),1] = 0
+            image[floor(n.x / scale),floor(n.y / scale),2] = 1
 
-dropped_nodes = [rx_loc]
 
-cmap = np.zeros(np.shape(mine))
+        image *= 255
 
-print("Starting Simulation")
-timer1 = time.time()
-for i in range(num_nodes):
-    timer2 = time.time()
-    
-    while True:
-        sum_before_path = np.sum(mine)
-        timer3 = time.time()
-        # new_node, cmap = predict_node(mine, cmap, scale, dropped_nodes, 3, noise, 350*10**6, (slope, intercept), env)
-        new_node, cmap = predict_node(mine, cmap, scale, dropped_nodes, com_range)
-        print("\t\tTook {}s to predict node location".format(time.time() - timer3))
-        path, length = pathfind_bfs(mine, robot_loc, [floor(new_node.x / scale), floor(new_node.y / scale)])
+        img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
+        print("Saving actual map with binary coverage for {}, {} nodes".format(c[0], c[3]))
+        img_gen.save("binary_binary-actual_{}-{}nodes.png".format(c[0], c[3]))
 
-        for l in range(len(path)):
-            robot_loc = path[l]
-            sum_before = np.sum(mine)
-            new_env = detect_obstacle(robot_loc, 50, np.copy(mine), obs_mine)
-            if not np.sum(new_env) == sum_before:
-                obs_locs = []
-                for x in range(len(new_env)):
-                    for y in range(len(new_env[x])):
-                        if mine[x,y] - new_env[x,y] == 1:
-                            obs_locs.append((x,y))
-                        mine[x,y] = new_env[x,y]
 
-                for o in obs_locs:
-                    tun_width = env.tunnels[0].width / 2
-                    x_map = (o[0] + 0.5) * scale
-                    y_map = (o[1] + 0.5) * scale
-                    new_obs = me.Obstacle([
-                        me.Point(x_map - tun_width, y_map - tun_width),
-                        me.Point(x_map + tun_width, y_map + tun_width),
-                        me.Point(x_map - tun_width, y_map + tun_width),
-                        me.Point(x_map + tun_width, y_map - tun_width)
-                    ])
-                    env.add_obstacle(new_obs)
-                for p in path:
-                    if mine[p[0], p[1]] == 0 or l == len(path) - 1:
-                        sum_before_path = np.sum(mine)
-                        timer3 = time.time()
-                        new_node, cmap = (mine, cmap, scale, dropped_nodes, com_range)
-                        print("\t\tTook {}s to predict node location".format(time.time() - timer3))
-                        path, length = pathfind_bfs(mine, robot_loc, [floor(new_node.x / scale), floor(new_node.y / scale)])
+        # Show coverage of actual map based on the throughput estimation method
+        print("Calculating loss using raytracing method")
+        tun:me.Tunnel = env.tunnels[0]
 
-                        l = -1
-        if np.sum(mine) == sum_before_path:
-            break
+        print("\tDetermining Routing")
+        to_process = [rx_loc]
+        while len(to_process) > 0:
+            next_node = to_process.pop(0)
+            for n in dropped_nodes:
+                if n.hops == -1:
+                    loss = rt_loss((n.x, n.y, n.h), (next_node.x, next_node.y, next_node.h), obs_mine, scale, height, 2.4e9, tun.width, tun.height, tun.eps_ceil, tun.eps_wall, tun.sig_ceil, tun.sig_wall)
+                    if (loss == float("-inf")):
+                        thpt = 0
+                    else:
+                        # loss = 10*log10(loss)
+                        rx_pow = tx_pow + loss
+                        rx_snr = rx_pow - noise
+                        thpt = bw * log2(1 + pow(10,(rx_snr / 10))) #/ pow(2, next_node.hops + 1)
+                    
+                    if thpt >= 350*10**6:
+                        n.hops = next_node.hops + 1
+                        n.rate = thpt / pow(2, next_node.hops + 1)
+                        to_process.append(n)
+        for i in range(1, len(dropped_nodes)):
+            if dropped_nodes[i].hops == -1:
+                dropped_nodes[i].hops = float("inf")
+
+        print("\tCalculating Coverage")
+        cmap = np.zeros(np.shape(obs_mine))
+        for x in range(0,len(cmap)):
+            for y in range(0,len(cmap[x])):
+                if (obs_mine[x][y] == 1):
+                    best_thpt = 0
+                    for n in dropped_nodes:
+                        loss = rt_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), obs_mine, scale, height, 2.4e9, tun.width, tun.height, tun.eps_ceil, tun.eps_wall, tun.sig_ceil, tun.sig_wall)
+                        # loss = rt.raytrace_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), 2.4e9, xml_env)
+                        if (loss == float("-inf")):
+                            thpt = 0
+                        else:
+                            # loss = 10*log10(loss)
+                            rx_pow = tx_pow + loss
+                            rx_snr = rx_pow - noise
+                            thpt = bw * log2(1 + pow(10,(rx_snr / 10))) / pow(2, n.hops)
+                        if thpt > best_thpt:
+                            best_thpt = thpt
+                    cmap[x][y] = best_thpt
         
-    dropped_nodes.append(new_node)
-    robot_loc = [floor(new_node.x / scale), floor(new_node.y / scale)]
-    print("\tTook {}s to drop node".format(time.time() - timer2))
+        print("Saving average throughput")
+        if has_of_been_opened:
+            f = open(avg_thpt_fname, "a")
+        else:
+            f = open(avg_thpt_fname, "w")
+            has_of_been_opened = True
+        
+        f.write("{},{} nodes:{}\n".format(c[0], c[3], np.sum(cmap) / np.sum(obs_mine)))
+        f.close()
+        
+        cmap = cmap / np.max(cmap)
+        cmap_inv = np.multiply(1 - cmap, obs_mine)
 
-    # -------------------------------------------------------------
-    # Save image of new coverage map
-    # -------------------------------------------------------------
-    # cmap_img = cmap / np.max(cmap)
-    # cmap_inv = np.multiply(1 - cmap_img, mine)
+        image = np.dstack((cmap_inv, cmap, np.zeros(np.shape(cmap))))
 
-    # image = np.dstack((cmap_inv, cmap_img, np.zeros(np.shape(cmap_img))))
-
-    # for n in dropped_nodes:
-    #     image[floor(n.x / scale),floor(n.y / scale),0] = 0
-    #     image[floor(n.x / scale),floor(n.y / scale),1] = 0
-    #     image[floor(n.x / scale),floor(n.y / scale),2] = 1
-
-
-    # image *= 255
-
-    # img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
-    # img_gen.show()
-    # img_gen.save("progress_cmap-{}.png".format(i))
-    # -------------------------------------------------------------
-
-print("Took {}s to drop all nodes".format(time.time() - timer1))
-
-cmap = cmap / np.max(cmap)
-cmap_inv = np.multiply(1 - cmap, mine)
-
-image = np.dstack((cmap_inv, cmap, np.zeros(np.shape(cmap))))
-
-print("Node Locations: ")
-for n in dropped_nodes:
-    print("\t({x},{y})".format(x=n.x, y=n.y))
-    image[floor(n.x / scale),floor(n.y / scale),0] = 0
-    image[floor(n.x / scale),floor(n.y / scale),1] = 0
-    image[floor(n.x / scale),floor(n.y / scale),2] = 1
+        for n in dropped_nodes:
+            image[floor(n.x / scale),floor(n.y / scale),0] = 0
+            image[floor(n.x / scale),floor(n.y / scale),1] = 0
+            image[floor(n.x / scale),floor(n.y / scale),2] = 1
 
 
-image *= 255
+        image *= 255
 
-img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
-img_gen.show()
-img_gen.save("GreedySimple_FinerResolution2.png")
+        img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
+        print("Saving actual map with raytracing coverage for {}, {} nodes.png".format(c[0], c[3]))
+        img_gen.save("binary_raytracing-actual_{}-{}nodes.png".format(c[0], c[3]))

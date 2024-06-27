@@ -665,12 +665,12 @@ class Environment:
                 ly = resolution * (y + 0.5) + self.lower_bound.y
 
                 # in_tun = False
-                in_obs = False
-                p = Point(lx, ly)
-                for o in self.obstacles:
-                    if o.inside(p):
-                        in_obs = True
-                        break
+                # in_obs = False
+                # p = Point(lx, ly)
+                # for o in self.obstacles:
+                #     if o.inside(p):
+                #         in_obs = True
+                #         break
                 
                 for tun in self.tunnels:
                     if tun.in_tunnel(Point(lx, ly)):

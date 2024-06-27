@@ -1,0 +1,70 @@
+<mine lower_bound="(0,0)" upper_bound = "(261, 133)">
+    <!-- <tunnel p1="(5,5)" p2="(153,153)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" /> -->
+    
+    <obstacle>
+        <corner p="(60, 82)" />
+        <corner p="(60, 130)" />
+        <corner p="(200, 130)" />
+        <corner p="(200, 82)" />
+    </obstacle>
+
+    <!-- Lower Vertical -->
+    <tunnel p1="(  7,75)" p2="(  7,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="( 15,75)" p2="( 15,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="( 23,75)" p2="( 23,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="( 31,75)" p2="( 31,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="( 39,75)" p2="( 39,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="( 47,75)" p2="( 47,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="( 55,75)" p2="( 55,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="( 63,75)" p2="( 63,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="( 71,75)" p2="( 71,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="( 79,75)" p2="( 79,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    
+    <!-- Lower Horizontal -->
+    <tunnel p1="(5, 77)" p2="(140, 77)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(5, 85)" p2="(140, 85)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(5, 93)" p2="(140, 93)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(5,101)" p2="(140,101)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(5,109)" p2="(140,109)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(5,117)" p2="(140,117)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(5,125)" p2="(140,125)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+
+    <!-- Central Vertical -->
+    <tunnel p1="( 87,  3)" p2="( 87,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="( 95,  3)" p2="( 95,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(103,  3)" p2="(103,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(111,  3)" p2="(111,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(119,  3)" p2="(119,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(127,  3)" p2="(127,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(135,  3)" p2="(135,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(143,  3)" p2="(143,127)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+
+    <!-- Upper Vertical -->
+    <tunnel p1="(151,  3)" p2="(151,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(159,  3)" p2="(159,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(167,  3)" p2="(167,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(175,  3)" p2="(175,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(183,  3)" p2="(183,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(191,  3)" p2="(191,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(199,  3)" p2="(199,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(207,  3)" p2="(207,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(215,  3)" p2="(215,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(223,  3)" p2="(223,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(231,  3)" p2="(231,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(239,  3)" p2="(239,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(247,  3)" p2="(247,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(255,  3)" p2="(255,71)" width="6" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+
+
+    <!-- Upper Horizontal -->
+    <tunnel p1="(85,  5)" p2="(253,  5)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(85, 13)" p2="(253, 13)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(85, 21)" p2="(253, 21)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(85, 29)" p2="(253, 29)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(85, 37)" p2="(253, 37)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(85, 45)" p2="(253, 45)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(85, 53)" p2="(253, 53)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(85, 61)" p2="(253, 61)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+    <tunnel p1="(85, 69)" p2="(253, 69)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" />
+
+</mine>
