@@ -9,6 +9,7 @@ import rt_slope
 import raytrace as rt
 import sys
 import time
+import os.path
 
 CORNER_THRESHOLD = 30
 CORNER_LOSS = 30
@@ -462,20 +463,24 @@ if __name__ == "__main__":
     c2 = (5+2+4*24,5+2+3*24)
 
     cases = [
-        ["ComplexRP", (19,205), 4, 4],
-        ["ComplexRP_Case1", (19,205), 4, 4],
+        # ["ComplexRP", (19,205), 4, 4],
+        # ["ComplexRP_Case1", (19,205), 4, 4],
         ["ComplexRP_Case2", (19,205), 4, 4],
         ["ComplexRP_Case3", (19,205), 4, 4],
-        ["ComplexRP", (19,205), 4, 10],
         ["minexml_test", (22,357), 4, 4],
         ["minexml_obstacle", (22,357), 4, 4],
         ["SimRig", (7,101), 4, 4],
         ["SimRig_Obstacle", (7,101), 4, 4],
-        ["SimRig", (7,101), 4, 10]
+        ["SimRig", (7,101), 4, 10],
+        ["ComplexRP", (19,205), 4, 10]
     ]
 
     avg_thpt_fname = "./raytracing_coverage_averages.txt"
+    avg_time_fname = "./raytracing_time_averages.txt"
     has_of_been_opened = False
+
+    nd_time = 0
+    nd_attempts = 0
 
     for c in cases:
         print("Running simulation for {}, {} nodes".format(c[0], c[3]))
@@ -530,7 +535,10 @@ if __name__ == "__main__":
                     findNewPath = False
                     timer3 = time.time()
                     new_node, cmap = predict_node(mine, cmap, scale, dropped_nodes, 3, noise, 350*10**6, env)
-                    print("\t\tTook {}s to predict node location".format(time.time() - timer3))
+                    attempt_time = time.time() - timer3
+                    nd_time += attempt_time
+                    nd_attempts += 1
+                    print("\t\tTook {}s to predict node location".format(attempt_time))
                     path, length = pathfind_bfs(mine, robot_loc, [floor(new_node.x / scale), floor(new_node.y / scale)])
 
                     for l in range(len(path)):
@@ -597,6 +605,7 @@ if __name__ == "__main__":
             # img_gen.save("progress_cmap-{}.png".format(i))
             # -------------------------------------------------------------
 
+        nd_time_total = time.time() - timer1
         print("Took {}s to drop all nodes".format(time.time() - timer1))
 
         cmap = cmap / np.max(cmap)
@@ -670,13 +679,24 @@ if __name__ == "__main__":
                     cmap[x][y] = best_thpt
         
         print("Saving average throughput")
-        if has_of_been_opened:
+        if os.path.isfile(avg_thpt_fname):
             f = open(avg_thpt_fname, "a")
         else:
             f = open(avg_thpt_fname, "w")
-            has_of_been_opened = True
         
-        f.write("{}:{}\n".format(c[0], np.sum(cmap) / np.sum(obs_mine)))
+        # Run name, # nodes, avg throughput
+        f.write("{},{},{}\n".format(c[0],c[3], np.sum(cmap) / np.sum(obs_mine)))
+        f.close()
+
+
+        print("Saving average time")
+        if os.path.isfile(avg_time_fname):
+            f = open(avg_time_fname, "a")
+        else:
+            f = open(avg_time_fname, "w")
+        
+        # Run name, # nodes, average time, total time
+        f.write("{},{},{},{}\n".format(c[0],c[3], nd_time / nd_attempts, nd_time_total))
         f.close()
         
         cmap = cmap / np.max(cmap)
