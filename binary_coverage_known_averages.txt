@@ -1,0 +1,10 @@
+ComplexRP,4 nodes:114576438.66678879
+ComplexRP_Case1,4 nodes:93996198.31663728
+ComplexRP_Case2,4 nodes:96924843.88260515
+ComplexRP_Case3,4 nodes:80564038.12870221
+ComplexRP,10 nodes:121618213.4694701
+minexml_test,4 nodes:231612468.54488727
+minexml_obstacle,4 nodes:233929618.96791783
+SimRig,4 nodes:151505281.3548834
+SimRig_Obstacle,4 nodes:110242789.20013006
+SimRig,10 nodes:177230182.09059593
