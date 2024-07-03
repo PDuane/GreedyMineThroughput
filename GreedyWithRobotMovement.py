@@ -463,20 +463,18 @@ if __name__ == "__main__":
     c2 = (5+2+4*24,5+2+3*24)
 
     cases = [
-        ["ComplexRP", (19,205), 4, 4],
-        ["ComplexRP_Case1", (19,205), 4, 4],
-        ["ComplexRP_Case2", (19,205), 4, 4],
-        ["ComplexRP_Case3", (19,205), 4, 4],
-        ["minexml_test", (22,357), 4, 4],
-        ["minexml_obstacle", (22,357), 4, 4],
-        ["SimRig", (7,101), 4, 4],
-        ["SimRig_Obstacle", (7,101), 4, 4],
-        ["SimRig", (7,101), 4, 10],
-        ["ComplexRP", (19,205), 4, 10]
+        ["ComplexRP_Case1", (19,205), 4,  4,  True],
+        ["ComplexRP_Case3", (19,205), 4,  4,  True],
+        ["ComplexRP_Case1", (19,205), 4, 10,  True],
+        ["ComplexRP_Case3", (19,205), 4, 10,  True],
+        ["SimRig_Case1",    ( 7,101), 4,  4,  True],
+        ["SimRig_Case2",    ( 7,101), 4,  4,  True],
+        ["SimRig_Case1",    ( 7,101), 4, 10,  True],
+        ["SimRig_Case2",    ( 7,101), 4, 10,  True]
     ]
 
-    avg_thpt_fname = "./raytracing_coverage_known_averages.txt"
-    avg_time_fname = "./raytracing_time_known_averages.txt"
+    avg_thpt_fname = "./results/raytracing_coverage_averages.txt"
+    avg_time_fname = "./results/raytracing_time_averages.txt"
     has_of_been_opened = False
 
     nd_time = 0
@@ -505,8 +503,10 @@ if __name__ == "__main__":
 
         #   Temporarily disable obstacle discovery and demonstrate how it
         #   performs in a fully known mine
-        # mine = env.draw_basic_bitmap(scale)
-        mine = env.draw_obstacle_bitmap(scale)
+        if c[4]:
+            mine = env.draw_basic_bitmap(scale)
+        else:
+            mine = env.draw_obstacle_bitmap(scale)
         unmod = np.copy(mine)
         obs_mine = env.draw_obstacle_bitmap(scale)
 
@@ -629,60 +629,64 @@ if __name__ == "__main__":
         img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
         # img_gen.show()
         print("Saving observed map for raytracing for {}, {} nodes.png".format(c[0], c[3]))
-        img_gen.save("ratracing_observed_{}-{}nodes.png".format(c[0], c[3]))
+        if c[4]:
+            img_gen.save("results/ratracing_observed_{}-{}nodes.png".format(c[0], c[3]))
+        else:
+            img_gen.save("results/ratracing_known_{}-{}nodes.png".format(c[0], c[3]))
 
 
         # !!! Not needed when obstacle is fully known. Uncomment before     !!!
         # !!! running obstacle discovery                                    !!!
-        # # ---------------------------------------------------------------------
-        # # Show coverage of actual map based on the throughput estimation method
-        # print("Calculating loss using raytracing method")
-        # tun:me.Tunnel = env.tunnels[0]
-        
-        # print("\tDetermining Routing")
-        # for i in range(1, len(dropped_nodes)):
-        #     dropped_nodes[i].hops = -1
-        # to_process = [rx_loc]
-        # while len(to_process) > 0:
-        #     next_node = to_process.pop(0)
-        #     for n in dropped_nodes:
-        #         if n.hops == -1:
-        #             loss = calc_loss((n.x, n.y, n.h), (next_node.x, next_node.y, next_node.h), obs_mine, scale, height, 2.4e9, tun.width, tun.height, tun.eps_ceil, tun.eps_wall, tun.sig_ceil, tun.sig_wall)
-        #             if (loss == float("-inf")):
-        #                 thpt = 0
-        #             else:
-        #                 # loss = 10*log10(loss)
-        #                 rx_pow = tx_pow + loss
-        #                 rx_snr = rx_pow - noise
-        #                 thpt = bw * log2(1 + pow(10,(rx_snr / 10))) #/ pow(2, next_node.hops + 1)
-                    
-        #             if thpt >= 350*10**6:
-        #                 n.hops = next_node.hops + 1
-        #                 n.rate = thpt / pow(2, next_node.hops + 1)
-        #                 to_process.append(n)
-        # for i in range(1, len(dropped_nodes)):
-        #     if dropped_nodes[i].hops == -1:
-        #         dropped_nodes[i].hops = float("inf")
+        # ---------------------------------------------------------------------
+        if c[4]:
+            # Show coverage of actual map based on the throughput estimation method
+            print("Recalculating loss using known obstacles")
+            tun:me.Tunnel = env.tunnels[0]
+            
+            print("\tDetermining Routing")
+            for i in range(1, len(dropped_nodes)):
+                dropped_nodes[i].hops = -1
+            to_process = [rx_loc]
+            while len(to_process) > 0:
+                next_node = to_process.pop(0)
+                for n in dropped_nodes:
+                    if n.hops == -1:
+                        loss = calc_loss((n.x, n.y, n.h), (next_node.x, next_node.y, next_node.h), obs_mine, scale, height, 2.4e9, tun.width, tun.height, tun.eps_ceil, tun.eps_wall, tun.sig_ceil, tun.sig_wall)
+                        if (loss == float("-inf")):
+                            thpt = 0
+                        else:
+                            # loss = 10*log10(loss)
+                            rx_pow = tx_pow + loss
+                            rx_snr = rx_pow - noise
+                            thpt = bw * log2(1 + pow(10,(rx_snr / 10))) #/ pow(2, next_node.hops + 1)
+                        
+                        if thpt >= 350*10**6:
+                            n.hops = next_node.hops + 1
+                            n.rate = thpt / pow(2, next_node.hops + 1)
+                            to_process.append(n)
+            for i in range(1, len(dropped_nodes)):
+                if dropped_nodes[i].hops == -1:
+                    dropped_nodes[i].hops = float("inf")
 
-        # print("\tCalculating Coverage")
-        # cmap = np.zeros(np.shape(obs_mine))
-        # for x in range(0,len(cmap)):
-        #     for y in range(0,len(cmap[x])):
-        #         if (obs_mine[x][y] == 1):
-        #             best_thpt = 0
-        #             for n in dropped_nodes:
-        #                 loss = calc_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), obs_mine, scale, height, 2.4e9, tun.width, tun.height, tun.eps_ceil, tun.eps_wall, tun.sig_ceil, tun.sig_wall)
-        #                 # loss = rt.raytrace_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), 2.4e9, xml_env)
-        #                 if (loss == float("-inf")):
-        #                     thpt = 0
-        #                 else:
-        #                     # loss = 10*log10(loss)
-        #                     rx_pow = tx_pow + loss
-        #                     rx_snr = rx_pow - noise
-        #                     thpt = bw * log2(1 + pow(10,(rx_snr / 10))) / pow(2, n.hops)
-        #                 if thpt > best_thpt:
-        #                     best_thpt = thpt
-        #             cmap[x][y] = best_thpt
+            print("\tCalculating Coverage")
+            cmap = np.zeros(np.shape(obs_mine))
+            for x in range(0,len(cmap)):
+                for y in range(0,len(cmap[x])):
+                    if (obs_mine[x][y] == 1):
+                        best_thpt = 0
+                        for n in dropped_nodes:
+                            loss = calc_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), obs_mine, scale, height, 2.4e9, tun.width, tun.height, tun.eps_ceil, tun.eps_wall, tun.sig_ceil, tun.sig_wall)
+                            # loss = rt.raytrace_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), 2.4e9, xml_env)
+                            if (loss == float("-inf")):
+                                thpt = 0
+                            else:
+                                # loss = 10*log10(loss)
+                                rx_pow = tx_pow + loss
+                                rx_snr = rx_pow - noise
+                                thpt = bw * log2(1 + pow(10,(rx_snr / 10))) / pow(2, n.hops)
+                            if thpt > best_thpt:
+                                best_thpt = thpt
+                        cmap[x][y] = best_thpt
         # ---------------------------------------------------------------------
         
         print("Saving average throughput")
@@ -692,7 +696,7 @@ if __name__ == "__main__":
             f = open(avg_thpt_fname, "w")
         
         # Run name, # nodes, avg throughput
-        f.write("{},{},{}\n".format(c[0],c[3], np.sum(cmap) / np.sum(obs_mine)))
+        f.write("{},nodes:{}nodes,discovery:{},{}\n".format(c[0],c[3],c[4], np.sum(cmap * obs_mine) / np.sum(obs_mine)))
         f.close()
 
 
@@ -703,26 +707,27 @@ if __name__ == "__main__":
             f = open(avg_time_fname, "w")
         
         # Run name, # nodes, average time, total time
-        f.write("{},{},{},{}\n".format(c[0],c[3], nd_time / nd_attempts, nd_time_total))
+        f.write("{},nodes:{},discovery:{},{},{}\n".format(c[0],c[3],c[4], nd_time / nd_attempts, nd_time_total))
         f.close()
         
         # !!! Not needed when obstacle is fully known. Uncomment before     !!!
         # !!! running obstacle discovery                                    !!!
         # ---------------------------------------------------------------------
-        # cmap = cmap / np.max(cmap)
-        # cmap_inv = np.multiply(1 - cmap, obs_mine)
+        if c[4]:
+            cmap = cmap / np.max(cmap)
+            cmap_inv = np.multiply(1 - cmap, obs_mine)
 
-        # image = np.dstack((cmap_inv, cmap, np.zeros(np.shape(cmap))))
+            image = np.dstack((cmap_inv, cmap, np.zeros(np.shape(cmap))))
 
-        # for n in dropped_nodes:
-        #     image[floor(n.x / scale),floor(n.y / scale),0] = 0
-        #     image[floor(n.x / scale),floor(n.y / scale),1] = 0
-        #     image[floor(n.x / scale),floor(n.y / scale),2] = 1
+            for n in dropped_nodes:
+                image[floor(n.x / scale),floor(n.y / scale),0] = 0
+                image[floor(n.x / scale),floor(n.y / scale),1] = 0
+                image[floor(n.x / scale),floor(n.y / scale),2] = 1
 
 
-        # image *= 255
+            image *= 255
 
-        # img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
-        # print("Saving actual map with raytracing coverage for {}, {} nodes.png".format(c[0], c[3]))
-        # img_gen.save("raytracing_actual_{}-{}nodes.png".format(c[0], c[3]))
+            img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
+            print("Saving actual map with raytracing coverage for {}, {} nodes.png".format(c[0], c[3]))
+            img_gen.save("results/raytracing_actual_{}-{}nodes.png".format(c[0], c[3]))
         # ---------------------------------------------------------------------

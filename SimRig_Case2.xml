@@ -2,10 +2,10 @@
     <!-- <tunnel p1="(5,5)" p2="(153,153)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" /> -->
     
     <obstacle>
-        <corner p="(60, 82)" />
-        <corner p="(60, 130)" />
-        <corner p="(200, 130)" />
-        <corner p="(200, 82)" />
+        <corner p="(99, 20)" />
+        <corner p="(99, 130)" />
+        <corner p="(150, 130)" />
+        <corner p="(150, 20)" />
     </obstacle>
 
     <!-- Lower Vertical -->

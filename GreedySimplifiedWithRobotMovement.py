@@ -385,20 +385,18 @@ if __name__ == "__main__":
     # Format:
     #   [run/file name, starting node coordinate, scale, number of nodes]
     cases = [
-        ["ComplexRP", (19,205), 4, 4],
-        ["ComplexRP_Case1", (19,205), 4, 4],
-        ["ComplexRP_Case2", (19,205), 4, 4],
-        ["ComplexRP_Case3", (19,205), 4, 4],
-        ["minexml_test", (22,357), 4, 4],
-        ["minexml_obstacle", (22,357), 4, 4],
-        ["SimRig", (7,101), 4, 4],
-        ["SimRig_Obstacle", (7,101), 4, 4],
-        ["SimRig", (7,101), 4, 10],
-        ["ComplexRP", (19,205), 4, 10]
+        ["ComplexRP_Case1", (19,205), 4,  4,  True],
+        ["ComplexRP_Case3", (19,205), 4,  4,  True],
+        # ["ComplexRP_Case1", (19,205), 4, 10,  True],
+        # ["ComplexRP_Case3", (19,205), 4, 10,  True],
+        # ["SimRig_Case1",    ( 7,101), 4,  4,  True],
+        # ["SimRig_Case2",    ( 7,101), 4,  4,  True],
+        # ["SimRig_Case1",    ( 7,101), 4, 10,  True],
+        # ["SimRig_Case2",    ( 7,101), 4, 10,  True]
     ]
 
-    avg_thpt_fname = "./approx_coverage_known_averages.txt"
-    avg_time_fname = "./approx_time_known_averages.txt"
+    avg_thpt_fname = "./results/approx_coverage_averages.txt"
+    avg_time_fname = "./results/approx_time_averages.txt"
     has_of_been_opened = False
 
     nd_time = 0
@@ -427,8 +425,10 @@ if __name__ == "__main__":
 
         #   Temporarily disable obstacle discovery and demonstrate how it
         #   performs in a fully known mine
-        # mine = env.draw_basic_bitmap(scale)
-        mine = env.draw_obstacle_bitmap(scale)
+        if c[4]:
+            mine = env.draw_basic_bitmap(scale)
+        else:
+            mine = env.draw_obstacle_bitmap(scale)
         unmod = np.copy(mine)
         obs_mine = env.draw_obstacle_bitmap(scale)
 
@@ -449,6 +449,7 @@ if __name__ == "__main__":
         noise = -120 # dBm
         tx_pow = 3 # dBm
         bw = 20 * 10**6 # Hz
+        thpt_thresh = 300*10**6
 
         # rx_loc = Node((22,357,1), 0, float("inf"))
         robot_loc = [floor(rx_loc.x / scale), floor(rx_loc.y / scale)]
@@ -470,7 +471,7 @@ if __name__ == "__main__":
                 while findNewPath:
                     findNewPath = False
                     timer3 = time.time()
-                    new_node, cmap = predict_node(mine, cmap, scale, dropped_nodes, 3, noise, 350*10**6, (slope, intercept), env)
+                    new_node, cmap = predict_node(mine, cmap, scale, dropped_nodes, 3, noise, thpt_thresh, (slope, intercept), env)
                     attempt_time = time.time() - timer3
                     nd_time += attempt_time
                     nd_attempts += 1
@@ -564,46 +565,49 @@ if __name__ == "__main__":
         img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
         # img_gen.show()
         print("Saving observed map from approximation method for {}, {} nodes".format(c[0], c[3]))
-        # img_gen.save("approx_approx-observed_{}-{}nodes.png".format(c[0], c[3]))
-        img_gen.save("approx_approx-known_{}-{}nodes.png".format(c[0], c[3]))
+        if c[4]:
+            img_gen.save("results/approx_approx-observed_{}-{}nodes.png".format(c[0], c[3]))
+        else:
+            img_gen.save("results/approx_approx-known_{}-{}nodes.png".format(c[0], c[3]))
 
         # !!! Not needed when obstacle is fully known. Uncomment before     !!!
         # !!! running obstacle discovery                                    !!!
         # ---------------------------------------------------------------------
-        # # Save the actual coverage map with placements using approximation method
-        # cmap = np.zeros(np.shape(obs_mine))
-        # for x in range(0,len(cmap)):
-        #     for y in range(0,len(cmap[x])):
-        #         if (obs_mine[x][y] == 1):
-        #             best_thpt = 0
-        #             for n in dropped_nodes:
-        #                 loss = calc_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), (slope, intercept), obs_mine, scale)
-        #                 if (loss == float("-inf")):
-        #                     thpt = 0
-        #                 else:
-        #                     rx_pow = tx_pow + loss
-        #                     rx_snr = rx_pow - noise
-        #                     thpt = bw * log2(1 + pow(10,(rx_snr / 10))) / pow(2, n.hops)
-        #                 if thpt > best_thpt:
-        #                     best_thpt = thpt
-        #             cmap[x][y] = best_thpt
-        # cmap = cmap / np.max(cmap)
-        # cmap_inv = np.multiply(1 - cmap, obs_mine)
+        if c[4]:
+            # Save the actual coverage map with placements using approximation method
+            cmap = np.zeros(np.shape(obs_mine))
+            for x in range(0,len(cmap)):
+                for y in range(0,len(cmap[x])):
+                    if (obs_mine[x][y] == 1):
+                        best_thpt = 0
+                        for n in dropped_nodes:
+                            loss = calc_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), (slope, intercept), obs_mine, scale)
+                            if (loss == float("-inf")):
+                                thpt = 0
+                            else:
+                                rx_pow = tx_pow + loss
+                                rx_snr = rx_pow - noise
+                                thpt = bw * log2(1 + pow(10,(rx_snr / 10))) / pow(2, n.hops)
+                            if thpt > best_thpt:
+                                best_thpt = thpt
+                        cmap[x][y] = best_thpt
+            cmap = cmap / np.max(cmap)
+            cmap_inv = np.multiply(1 - cmap, obs_mine)
 
-        # image = np.dstack((cmap_inv, cmap, np.zeros(np.shape(cmap))))
+            image = np.dstack((cmap_inv, cmap, np.zeros(np.shape(cmap))))
 
-        # for n in dropped_nodes:
-        #     image[floor(n.x / scale),floor(n.y / scale),0] = 0
-        #     image[floor(n.x / scale),floor(n.y / scale),1] = 0
-        #     image[floor(n.x / scale),floor(n.y / scale),2] = 1
+            for n in dropped_nodes:
+                image[floor(n.x / scale),floor(n.y / scale),0] = 0
+                image[floor(n.x / scale),floor(n.y / scale),1] = 0
+                image[floor(n.x / scale),floor(n.y / scale),2] = 1
 
 
-        # image *= 255
+            image *= 255
 
-        # img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
-        # # img_gen.show()
-        # print("Saving actual map from approximation method for {}, {} nodes".format(c[0], c[3]))
-        # img_gen.save("approx_approx-actual_{}-{}nodes.png".format(c[0], c[3]))
+            img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
+            # img_gen.show()
+            print("Saving actual map from approximation method for {}, {} nodes".format(c[0], c[3]))
+            img_gen.save("results/approx_approx-actual_{}-{}nodes.png".format(c[0], c[3]))
         # ---------------------------------------------------------------------
 
         # Show coverage of actual map based on the throughput estimation method
@@ -627,7 +631,7 @@ if __name__ == "__main__":
                         rx_snr = rx_pow - noise
                         thpt = bw * log2(1 + pow(10,(rx_snr / 10))) #/ pow(2, next_node.hops + 1)
                     
-                    if thpt >= 350*10**6:
+                    if thpt >= thpt_thresh:
                         n.hops = next_node.hops + 1
                         n.rate = thpt / pow(2, next_node.hops + 1)
                         to_process.append(n)
@@ -662,7 +666,7 @@ if __name__ == "__main__":
             f = open(avg_thpt_fname, "w")
             # has_of_been_opened = True
         
-        f.write("{}:{}\n".format(c[0], np.sum(cmap) / np.sum(obs_mine)))
+        f.write("{},nodes:{}nodes,discovery:{},{}\n".format(c[0],c[3],c[4], np.sum(cmap * obs_mine) / np.sum(obs_mine)))
         f.close()
 
         # Save run times
@@ -673,7 +677,7 @@ if __name__ == "__main__":
             f = open(avg_time_fname, "w")
         
         # Run name, # nodes, average time, total time
-        f.write("{},{},{},{}\n".format(c[0],c[3], nd_time / nd_attempts, nd_time_total))
+        f.write("{},nodes:{},discovery:{},{},{}\n".format(c[0],c[3],c[4], nd_time / nd_attempts, nd_time_total))
         f.close()
         
         cmap = cmap / np.max(cmap)
@@ -691,5 +695,7 @@ if __name__ == "__main__":
 
         img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
         print("Saving actual map with raytracing coverage for {}, {} nodes.png".format(c[0], c[3]))
-        # img_gen.save("approx_raytracing-actual_{}-{}nodes.png".format(c[0], c[3]))
-        img_gen.save("approx_raytracing-known_{}-{}nodes.png".format(c[0], c[3]))
+        if c[4]:
+            img_gen.save("results/approx_raytracing-actual_{}-{}nodes.png".format(c[0], c[3]))
+        else:
+            img_gen.save("results/approx_raytracing-known_{}-{}nodes.png".format(c[0], c[3]))

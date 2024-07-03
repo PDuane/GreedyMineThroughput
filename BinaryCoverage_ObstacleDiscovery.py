@@ -301,7 +301,8 @@ def detect_obstacle(location, vis_range, og_env, obs_env):
                         break
     return og_env
 
-def predict_node(map, c_map, scale, dropped, c_range):
+# c_range parameter is of the form (los_range, diamond_range)
+def predict_node(map, c_map, scale, dropped, c_range:tuple):
     c_map = np.zeros(np.shape(map))
     for x in range(0,len(c_map)):
         for y in range(0,len(c_map[x])):
@@ -309,10 +310,44 @@ def predict_node(map, c_map, scale, dropped, c_range):
                 # best_thpt = 0
                 for n in dropped:
                     los = has_los((n.x, n.y), ((x+0.5)*scale, (y+0.5)*scale), map, scale)
-                    inrange = sqrt(pow(n.x - (x+0.5)*scale, 2) + pow(n.y - (y+0.5)*scale, 2)) < c_range
-                    if los and inrange:
-                        c_map[x][y] = 1
-                        break
+                    if los and (floor(n.x / scale) == x or floor(n.y / scale) == y):
+                        # los = has_los((n.x, n.y), ((x+0.5)*scale, (y+0.5)*scale), map, scale)
+                        inrange = sqrt(pow(n.x - (x+0.5)*scale, 2) + pow(n.y - (y+0.5)*scale, 2)) < c_range[0]
+                        if inrange:
+                            c_map[x][y] = 1
+                            break
+                    else:
+                        # Determine if the point is within the diamond
+                        dmnd = [
+                            (n.x, n.y + 2*c_range[1]),
+                            (n.x + 2*c_range[1], n.y),
+                            (n.x, n.y - 2*c_range[1]),
+                            (n.x - 2*c_range[1], n.y)
+                            ]
+                        
+                        x_upscale = (x + 0.5) * scale
+                        y_upscale = (y + 0.5) * scale
+
+                        area_tri = 0
+                        for i in range(0,4):
+                            j = (i + 1) % 4
+                            side_a = sqrt((dmnd[i][0] - x_upscale)**2 + (dmnd[i][1] - y_upscale)**2)
+                            side_b = sqrt((dmnd[j][0] - x_upscale)**2 + (dmnd[j][1] - y_upscale)**2)
+                            side_c = sqrt((dmnd[i][0] - dmnd[j][0])**2 + (dmnd[i][1] - dmnd[j][1])**2)
+                            sp = (side_a + side_b + side_c) / 2
+                            area_tri += sqrt(sp * (sp - side_a) * (sp - side_b) * (sp - side_c))
+                            # area_tri += abs((dmnd[i][0] * (dmnd[j][1] - y_upscale) + dmnd[j][0] * (y_upscale - dmnd[i][1]) + x_upscale * (dmnd[i][1] - dmnd[j][1])) / 2)
+
+                        # dx = sqrt(pow(c[1].x - c[0].x, 2) + pow(c[1].y - c[0].y, 2))
+                        # dy = sqrt(pow(c[3].x - c[0].x, 2) + pow(c[3].y - c[0].y, 2))
+
+                        # area_rect = dx * dy
+                        area_rect = 8*c_range[1]**2
+
+                        if area_tri <= area_rect + 0.000001:
+                            c_map[x][y] = 1
+                            break
+                        
                     # loss = calc_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), rf_prop, map, scale)
                     # if (loss == float("-inf")):
                     #     thpt = 0
@@ -356,12 +391,49 @@ def predict_node(map, c_map, scale, dropped, c_range):
             if map[x,y] == 1:
                 isConnected = False
                 for n in dropped:
-                    los = has_los(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), map, scale)
-                    inrange = sqrt(pow(n.x - (x+0.5)*scale, 2) + pow(n.y - (y+0.5)*scale, 2)) < c_range
+                    los = has_los((n.x, n.y), ((x+0.5)*scale, (y+0.5)*scale), map, scale)
+                    if los and (floor(n.x / scale) == x or floor(n.y / scale) == y):
+                        inrange = sqrt(pow(n.x - (x+0.5)*scale, 2) + pow(n.y - (y+0.5)*scale, 2)) < c_range[0]
+                        if inrange:
+                            isConnected = True
+                            break
+                    else:
+                        # Determine if the point is within the diamond
+                        dmnd = [
+                            (n.x, n.y + 2*c_range[1]),
+                            (n.x + 2*c_range[1], n.y),
+                            (n.x, n.y - 2*c_range[1]),
+                            (n.x - 2*c_range[1], n.y)
+                            ]
+                        
+                        x_upscale = (x + 0.5) * scale
+                        y_upscale = (y + 0.5) * scale
 
-                    if los and inrange:
-                        isConnected = True
-                        break
+                        area_tri = 0
+                        for i in range(0,4):
+                            j = (i + 1) % 4
+                            side_a = sqrt((dmnd[i][0] - x_upscale)**2 + (dmnd[i][1] - y_upscale)**2)
+                            side_b = sqrt((dmnd[j][0] - x_upscale)**2 + (dmnd[j][1] - y_upscale)**2)
+                            side_c = sqrt((dmnd[i][0] - dmnd[j][0])**2 + (dmnd[i][1] - dmnd[j][1])**2)
+                            sp = (side_a + side_b + side_c) / 2
+                            area_tri += sqrt(sp * (sp - side_a) * (sp - side_b) * (sp - side_c))
+                            # area_tri += abs((dmnd[i][0] * (dmnd[j][1] - y_upscale) + dmnd[j][0] * (y_upscale - dmnd[i][1]) + x_upscale * (dmnd[i][1] - dmnd[j][1])) / 2)
+
+                        # dx = sqrt(pow(c[1].x - c[0].x, 2) + pow(c[1].y - c[0].y, 2))
+                        # dy = sqrt(pow(c[3].x - c[0].x, 2) + pow(c[3].y - c[0].y, 2))
+
+                        # area_rect = dx * dy
+                        area_rect = 8*c_range[1]**2
+
+                        if area_tri <= area_rect + 0.000001:
+                            isConnected = True
+                            break
+                    # los = has_los(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), map, scale)
+                    # inrange = sqrt(pow(n.x - (x+0.5)*scale, 2) + pow(n.y - (y+0.5)*scale, 2)) < c_range
+
+                    # if los and inrange:
+                    #     isConnected = True
+                    #     break
 
                 if isConnected:
                     # c_map_new = np.zeros(np.shape(c_map))
@@ -369,8 +441,8 @@ def predict_node(map, c_map, scale, dropped, c_range):
                     for x2 in range(0,len(c_map_new)):
                         for y2 in range(0,len(c_map_new[x2])):
                             if (map[x2, y2] == 1):
-                                los = has_los(((x2+0.5)*scale, (y2+0.5)*scale, height), ((x+0.5)*scale, (y+0.5)*scale, height), map, scale)
-                                inrange = sqrt(pow((x2+0.5)*scale - (x+0.5)*scale, 2) + pow((y2+0.5)*scale - (y+0.5)*scale, 2)) < c_range
+                                # los = has_los(((x2+0.5)*scale, (y2+0.5)*scale, height), ((x+0.5)*scale, (y+0.5)*scale, height), map, scale)
+                                # inrange = sqrt(pow((x2+0.5)*scale - (x+0.5)*scale, 2) + pow((y2+0.5)*scale - (y+0.5)*scale, 2)) < c_range
 
                                 # loss = calc_loss(((x2+0.5)*scale, (y2+0.5)*scale, height), ((x+0.5)*scale, (y+0.5)*scale, height), rf_prop, map, scale)
                                 # if (loss == float("-inf")):
@@ -379,8 +451,47 @@ def predict_node(map, c_map, scale, dropped, c_range):
                                 #     rx_pow = tx_pow + loss
                                 #     rx_snr = rx_pow - noise
                                 #     thpt = bw * log2(1 + pow(10,(rx_snr / 10))) / pow(2, best_node.hops + 1)
-                                if los and inrange and (map[x2,y2] == 1):
-                                    c_map_new[x2,y2] = 1
+                                los = has_los(((x2+0.5)*scale, (y2+0.5)*scale), ((x+0.5)*scale, (y+0.5)*scale), map, scale)
+                                if los and (x2 == x or y2 == y):
+                                    inrange = sqrt(pow((x2+0.5)*scale - (x+0.5)*scale, 2) + pow((y2+0.5)*scale - (y+0.5)*scale, 2)) < c_range[0]
+                                    if inrange:
+                                        c_map_new[x2,y2] = 1
+                                        break
+                                else:
+                                    x_s = (x + 0.5) * scale
+                                    y_s = (y + 0.5) * scale
+                                    x2_s = (x2 + 0.5) * scale
+                                    y2_s = (y2 + 0.5) * scale
+
+                                    # Determine if the point is within the diamond
+                                    dmnd = [
+                                        (x_s, y_s + 2*c_range[1]),
+                                        (x_s + 2*c_range[1], y_s),
+                                        (x_s, y_s - 2*c_range[1]),
+                                        (x_s - 2*c_range[1], y_s)
+                                        ]
+
+                                    area_tri = 0
+                                    for i in range(0,4):
+                                        j = (i + 1) % 4
+                                        side_a = sqrt((dmnd[i][0] - x2_s)**2 + (dmnd[i][1] - y2_s)**2)
+                                        side_b = sqrt((dmnd[j][0] - x2_s)**2 + (dmnd[j][1] - y2_s)**2)
+                                        side_c = sqrt((dmnd[i][0] - dmnd[j][0])**2 + (dmnd[i][1] - dmnd[j][1])**2)
+                                        sp = (side_a + side_b + side_c) / 2
+                                        area_tri += sqrt(sp * (sp - side_a) * (sp - side_b) * (sp - side_c))
+                                        # area_tri += abs((dmnd[i][0] * (dmnd[j][1] - y_upscale) + dmnd[j][0] * (y_upscale - dmnd[i][1]) + x_upscale * (dmnd[i][1] - dmnd[j][1])) / 2)
+
+                                    # dx = sqrt(pow(c[1].x - c[0].x, 2) + pow(c[1].y - c[0].y, 2))
+                                    # dy = sqrt(pow(c[3].x - c[0].x, 2) + pow(c[3].y - c[0].y, 2))
+
+                                    # area_rect = dx * dy
+                                    area_rect = 8*c_range[1]**2
+
+                                    if area_tri <= area_rect + 0.000001:
+                                        c_map_new[x2,y2] = 1
+                                        break
+                                # if los and inrange and (map[x2,y2] == 1):
+                                #     c_map_new[x2,y2] = 1
                 
                     new_coverage = np.sum(c_map_new)
                     if new_coverage > area:
@@ -397,22 +508,20 @@ if __name__ == "__main__":
     c2 = (5+2+4*24,5+2+3*24)
 
     # Format:
-    #   [run/file name, starting node coordinate, scale, number of nodes]
+    #   [run/file name, starting node coordinate, scale, number of nodes, use obstacle discovery]
     cases = [
-        ["ComplexRP", (19,205), 4, 4],
-        ["ComplexRP_Case1", (19,205), 4, 4],
-        ["ComplexRP_Case2", (19,205), 4, 4],
-        ["ComplexRP_Case3", (19,205), 4, 4],
-        ["minexml_test", (22,357), 4, 4],
-        ["minexml_obstacle", (22,357), 4, 4],
-        ["SimRig", (7,101), 4, 4],
-        ["SimRig_Obstacle", (7,101), 4, 4],
-        ["SimRig", (7,101), 4, 10],
-        ["ComplexRP", (19,205), 4, 10]
+        ["ComplexRP_Case1", (19,205), 4,  4,  True],
+        ["ComplexRP_Case3", (19,205), 4,  4,  True],
+        ["ComplexRP_Case1", (19,205), 4, 10,  True],
+        ["ComplexRP_Case3", (19,205), 4, 10,  True],
+        ["SimRig_Case1",    ( 7,101), 4,  4,  True],
+        ["SimRig_Case2",    ( 7,101), 4,  4,  True],
+        ["SimRig_Case1",    ( 7,101), 4, 10,  True],
+        ["SimRig_Case2",    ( 7,101), 4, 10,  True]
     ]
 
-    avg_thpt_fname = "./binary_coverage_known_averages.txt"
-    avg_time_fname = "./binary_time_known_averages.txt"
+    avg_thpt_fname = "./results/binary_coverage_averages.txt"
+    avg_time_fname = "./results/binary_time_averages.txt"
     has_of_been_opened = False
 
     nd_time = 0
@@ -439,12 +548,18 @@ if __name__ == "__main__":
         # scale = 6                     # For comple mines
         scale = c[2]
 
-        #   Temporarily disable obstacle discovery and demonstrate how it
-        #   performs in a fully known mine
-        # mine = env.draw_basic_bitmap(scale)
-        mine = env.draw_obstacle_bitmap(scale)
+        if c[4]:
+            mine = env.draw_basic_bitmap(scale)
+        else:
+            mine = env.draw_obstacle_bitmap(scale)   # Use this if you want the obstacle(s) fully known
         unmod = np.copy(mine)
         obs_mine = env.draw_obstacle_bitmap(scale)
+
+
+        noise = -120 # dBm
+        tx_pow = 3 # dBm
+        bw = 20 * 10**6 # Hz
+        thpt_thresh = 300*10**6
 
         print("Estimating path loss constant:")
         tun_ref:me.Tunnel = env.tunnels[0]
@@ -452,12 +567,18 @@ if __name__ == "__main__":
 
         slope, intercept = rt_slope.get_rtslope(slope_tun, 2.4e9, tun_ref.height/2)
 
-        com_range = (-120 - intercept) / slope
+        comm_thresh = noise + tx_pow + 10*log10(pow(2, thpt_thresh/bw) - 1)
+        los_range = (comm_thresh - intercept) / slope
+        # dmd_range = (comm_thresh + CORNER_LOSS - intercept) / slope
+        dmd_range = CORNER_THRESHOLD / 2
+
+        com_range = (los_range, dmd_range)
+
 
         l = me.Line(me.Point(0, intercept), me.Point(600, intercept + 600 * slope))
         print("\tPath Loss Line: {}*d + {}".format(slope, intercept))
 
-        print("\tRange: {}".format(com_range))
+        print("\tRange: {} los, {} min nlos".format(com_range[0], com_range[1]))
 
         # Empty the obstacle array so the algorithm works only
         #     with discovered obstacles
@@ -465,9 +586,6 @@ if __name__ == "__main__":
 
         print("Performing Setup")
         # Define environment and channel parameters
-        noise = -120 # dBm
-        tx_pow = 3 # dBm
-        bw = 20 * 10**6 # Hz
 
         # rx_loc = Node((22,357,1), 0, float("inf"))
         robot_loc = [floor(rx_loc.x / scale), floor(rx_loc.y / scale)]
@@ -583,44 +701,80 @@ if __name__ == "__main__":
         img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
         # img_gen.show()
         print("Saving observed map with binary coverage for {}, {} nodes".format(c[0], c[3]))
-        # img_gen.save("binary_binary-observed_{}-{}nodes.png".format(c[0], c[3]))
-        img_gen.save("binary_binary-known_{}-{}nodes.png".format(c[0], c[3]))
+        if c[4]:
+            img_gen.save("results/binary_binary-observed_{}-{}nodes.png".format(c[0], c[3]))
+        else:
+            img_gen.save("results/binary_binary-known_{}-{}nodes.png".format(c[0], c[3]))
 
 
         # !!! Not needed when obstacle is fully known. Uncomment before     !!!
         # !!! running obstacle discovery                                    !!!
         # ---------------------------------------------------------------------
-        # # Save the actual coverage map with placements using binary coverage method
-        # cmap = np.zeros(np.shape(obs_mine))
-        # for x in range(0,len(cmap)):
-        #     for y in range(0,len(cmap[x])):
-        #         if (obs_mine[x][y] == 1):
-        #             # best_thpt = 0
-        #             for n in dropped_nodes:
-        #                 los = has_los((n.x, n.y), ((x+0.5)*scale, (y+0.5)*scale), obs_mine, scale)
-        #                 inrange = sqrt(pow(n.x - (x+0.5)*scale, 2) + pow(n.y - (y+0.5)*scale, 2)) < com_range
-        #                 if los and inrange:
-        #                     cmap[x][y] = 1
-        #                     break
+        if c[4]:
+            # Save the actual coverage map with placements using binary coverage method
+            cmap = np.zeros(np.shape(obs_mine))
+            for x in range(0,len(cmap)):
+                for y in range(0,len(cmap[x])):
+                    if (obs_mine[x][y] == 1):
+                        # best_thpt = 0
+                        for n in dropped_nodes:
+                            los = has_los((n.x, n.y), ((x+0.5)*scale, (y+0.5)*scale), obs_mine, scale)
+                            if los and (floor(n.x / scale) == x or floor(n.y / scale) == y):
+                                # los = has_los((n.x, n.y), ((x+0.5)*scale, (y+0.5)*scale), map, scale)
+                                inrange = sqrt(pow(n.x - (x+0.5)*scale, 2) + pow(n.y - (y+0.5)*scale, 2)) < com_range[0]
+                                if inrange:
+                                    cmap[x][y] = 1
+                                    break
+                            else:
+                                # Determine if the point is within the diamond
+                                dmnd = [
+                                    (n.x, n.y + 2*com_range[1]),
+                                    (n.x + 2*com_range[1], n.y),
+                                    (n.x, n.y - 2*com_range[1]),
+                                    (n.x - 2*com_range[1], n.y)
+                                    ]
+                                
+                                x_upscale = (x + 0.5) * scale
+                                y_upscale = (y + 0.5) * scale
 
-        # # Save actual map with binary coverage method
-        # # print("Saving actual map with binary coverage_{}.png".format(c[0]))
-        # cmap = cmap / np.max(cmap)
-        # cmap_inv = np.multiply(1 - cmap, obs_mine)
+                                area_tri = 0
+                                for i in range(0,4):
+                                    j = (i + 1) % 4
+                                    side_a = sqrt((dmnd[i][0] - x_upscale)**2 + (dmnd[i][1] - y_upscale)**2)
+                                    side_b = sqrt((dmnd[j][0] - x_upscale)**2 + (dmnd[j][1] - y_upscale)**2)
+                                    side_c = sqrt((dmnd[i][0] - dmnd[j][0])**2 + (dmnd[i][1] - dmnd[j][1])**2)
+                                    sp = (side_a + side_b + side_c) / 2
+                                    area_tri += sqrt(sp * (sp - side_a) * (sp - side_b) * (sp - side_c))
+                                    # area_tri += abs((dmnd[i][0] * (dmnd[j][1] - y_upscale) + dmnd[j][0] * (y_upscale - dmnd[i][1]) + x_upscale * (dmnd[i][1] - dmnd[j][1])) / 2)
 
-        # image = np.dstack((cmap_inv, cmap, np.zeros(np.shape(cmap))))
+                                # dx = sqrt(pow(c[1].x - c[0].x, 2) + pow(c[1].y - c[0].y, 2))
+                                # dy = sqrt(pow(c[3].x - c[0].x, 2) + pow(c[3].y - c[0].y, 2))
 
-        # for n in dropped_nodes:
-        #     image[floor(n.x / scale),floor(n.y / scale),0] = 0
-        #     image[floor(n.x / scale),floor(n.y / scale),1] = 0
-        #     image[floor(n.x / scale),floor(n.y / scale),2] = 1
+                                # area_rect = dx * dy
+                                area_rect = 8*com_range[1]**2
+
+                                if area_tri <= area_rect + 0.000001:
+                                    cmap[x][y] = 1
+                                    break
+
+            # Save actual map with binary coverage method
+            # print("Saving actual map with binary coverage_{}.png".format(c[0]))
+            cmap = cmap / np.max(cmap)
+            cmap_inv = np.multiply(1 - cmap, obs_mine)
+
+            image = np.dstack((cmap_inv, cmap, np.zeros(np.shape(cmap))))
+
+            for n in dropped_nodes:
+                image[floor(n.x / scale),floor(n.y / scale),0] = 0
+                image[floor(n.x / scale),floor(n.y / scale),1] = 0
+                image[floor(n.x / scale),floor(n.y / scale),2] = 1
 
 
-        # image *= 255
+            image *= 255
 
-        # img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
-        # print("Saving actual map with binary coverage for {}, {} nodes".format(c[0], c[3]))
-        # img_gen.save("binary_binary-actual_{}-{}nodes.png".format(c[0], c[3]))
+            img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
+            print("Saving actual map with binary coverage for {}, {} nodes".format(c[0], c[3]))
+            img_gen.save("results/binary_binary-actual_{}-{}nodes.png".format(c[0], c[3]))
         # ---------------------------------------------------------------------
 
 
@@ -643,7 +797,7 @@ if __name__ == "__main__":
                         rx_snr = rx_pow - noise
                         thpt = bw * log2(1 + pow(10,(rx_snr / 10))) #/ pow(2, next_node.hops + 1)
                     
-                    if thpt >= 350*10**6:
+                    if thpt >= (350*10**6) * 0.9:
                         n.hops = next_node.hops + 1
                         n.rate = thpt / pow(2, next_node.hops + 1)
                         to_process.append(n)
@@ -678,7 +832,7 @@ if __name__ == "__main__":
             f = open(avg_thpt_fname, "w")
             has_of_been_opened = True
         
-        f.write("{},{} nodes:{}\n".format(c[0], c[3], np.sum(cmap) / np.sum(obs_mine)))
+        f.write("{},nodes:{},discovery:{},{}\n".format(c[0],c[3],c[4], np.sum(cmap * obs_mine) / np.sum(obs_mine)))
         f.close()
 
         # Save run times
@@ -689,7 +843,7 @@ if __name__ == "__main__":
             f = open(avg_time_fname, "w")
         
         # Run name, # nodes, average time, total time
-        f.write("{},{},{},{}\n".format(c[0],c[3], nd_time / nd_attempts, nd_time_total))
+        f.write("{},{},discovery:{},{},{}\n".format(c[0],c[3],c[4], nd_time / nd_attempts, nd_time_total))
         f.close()
         
         cmap = cmap / np.max(cmap)
@@ -707,5 +861,7 @@ if __name__ == "__main__":
 
         img_gen = Image.fromarray(np.uint8(image.swapaxes(0,1)))
         print("Saving actual map with raytracing coverage for {}, {} nodes.png".format(c[0], c[3]))
-        # img_gen.save("binary_raytracing-actual_{}-{}nodes.png".format(c[0], c[3]))
-        img_gen.save("binary_raytracing-known_{}-{}nodes.png".format(c[0], c[3]))
+        if c[4]:
+            img_gen.save("results/binary_raytracing-actual_{}-{}nodes.png".format(c[0], c[3]))
+        else:
+            img_gen.save("results/binary_raytracing-known_{}-{}nodes.png".format(c[0], c[3]))
