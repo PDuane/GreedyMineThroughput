@@ -11,7 +11,7 @@ import os.path
 from GreedyWithRobotMovement import calc_loss as rt_loss
 
 CORNER_THRESHOLD = 30
-CORNER_LOSS = 30
+CORNER_LOSS = 40
 
 class Node:
     location:tuple

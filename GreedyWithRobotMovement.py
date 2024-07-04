@@ -12,7 +12,7 @@ import time
 import os.path
 
 CORNER_THRESHOLD = 30
-CORNER_LOSS = 30
+CORNER_LOSS = 40
 
 class Node:
     location:tuple

@@ -10,7 +10,7 @@ from GreedyWithRobotMovement import calc_loss as rt_loss
 import os.path
 
 CORNER_THRESHOLD = 30
-CORNER_LOSS = 30
+CORNER_LOSS = 40
 
 class Node:
     location:tuple
@@ -387,12 +387,12 @@ if __name__ == "__main__":
     cases = [
         ["ComplexRP_Case1", (19,205), 4,  4,  True],
         ["ComplexRP_Case3", (19,205), 4,  4,  True],
-        # ["ComplexRP_Case1", (19,205), 4, 10,  True],
-        # ["ComplexRP_Case3", (19,205), 4, 10,  True],
-        # ["SimRig_Case1",    ( 7,101), 4,  4,  True],
-        # ["SimRig_Case2",    ( 7,101), 4,  4,  True],
-        # ["SimRig_Case1",    ( 7,101), 4, 10,  True],
-        # ["SimRig_Case2",    ( 7,101), 4, 10,  True]
+        ["ComplexRP_Case1", (19,205), 4, 10,  True],
+        ["ComplexRP_Case3", (19,205), 4, 10,  True],
+        ["SimRig_Case1",    ( 7,101), 4,  4,  True],
+        ["SimRig_Case2",    ( 7,101), 4,  4,  True],
+        ["SimRig_Case1",    ( 7,101), 4, 10,  True],
+        ["SimRig_Case2",    ( 7,101), 4, 10,  True]
     ]
 
     avg_thpt_fname = "./results/approx_coverage_averages.txt"
@@ -437,6 +437,7 @@ if __name__ == "__main__":
         slope_tun = me.Tunnel(me.Point(0, -2), me.Point(0, 602), tun_ref.width, tun_ref.height, tun_ref.eps_wall, tun_ref.sig_wall, tun_ref.eps_ceil, tun_ref.sig_ceil)
 
         slope, intercept = rt_slope.get_rtslope(slope_tun, 2.4e9, tun_ref.height/2)
+        slope *= 1.2
         l = me.Line(me.Point(0, intercept), me.Point(600, intercept + 600 * slope))
         print("\tPath Loss Line: {}*d + {}".format(slope, intercept))
 
