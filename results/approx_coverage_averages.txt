@@ -1,0 +1,8 @@
+ComplexRP_Case1,nodes:4nodes,discovery:True,88623454.6564769
+ComplexRP_Case3,nodes:4nodes,discovery:True,86127557.97070561
+ComplexRP_Case1,nodes:10nodes,discovery:True,99499319.33339547
+ComplexRP_Case3,nodes:10nodes,discovery:True,102975259.44461088
+SimRig_Case1,nodes:4nodes,discovery:True,98452873.0235663
+SimRig_Case2,nodes:4nodes,discovery:True,141610805.89373583
+SimRig_Case1,nodes:10nodes,discovery:True,106167136.18354993
+SimRig_Case2,nodes:10nodes,discovery:True,149393364.28510144

@@ -79,6 +79,11 @@ def get_rtslope(t:me.Tunnel, freq, height):
     # plt.plot(ys,pows)
     slope, intercept, r_value, p_value, std_err = stats.linregress(ys,pows)
     # plt.plot(ys, ys * slope + intercept)
+    # plt.title("Full Model vs Linear Approximation")
+    # plt.ylabel("Loss (dB)")
+    # plt.xlabel("Distance (meters)")
+    # plt.legend(["Full Model", "Approximation"])
+    # plt.savefig("full-vs-approx.png")
     # plt.show()
     return (slope, intercept)
 

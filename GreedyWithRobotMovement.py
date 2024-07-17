@@ -97,16 +97,16 @@ def calc_loss(n1, n2, map, scale, a_height, f, t_width, t_height, eps_ceil, eps_
         los_c2 = has_los(c2, n2, map, scale) and has_los(c2, n1, map, scale)
         if not (los_c1 or los_c2):
             return float("-inf")
+        elif (los_c1 and los_c2):
+            if euclidean(n2, c1) > euclidean(n2, c2):
+                c = c2
+            else:
+                c = c1
         elif (los_c1):
             c = c1
         elif (los_c2):
             c = c2
-        else:
-            if euclidean(n1, c1) > euclidean(n1, c2):
-                c = c2
-            else:
-                c = c1
-        dc = euclidean(n1,c)
+        dc = euclidean(n2,c)
         if dc > CORNER_THRESHOLD:
             return loss - CORNER_LOSS
         else:
@@ -373,10 +373,10 @@ def predict_node(map, c_map, scale, dropped, tx_pow, noise, onehop_thpt, xml_env
     c_map = np.zeros(np.shape(map))
     for x in range(0,len(c_map)):
         for y in range(0,len(c_map[x])):
-            if (mine[x][y] == 1):
+            if (map[x][y] == 1):
                 best_thpt = 0
                 for n in dropped:
-                    loss = calc_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), mine, scale, height, 2.4e9, tun.width, tun.height, tun.eps_ceil, tun.eps_wall, tun.sig_ceil, tun.sig_wall)
+                    loss = calc_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), map, scale, height, 2.4e9, tun.width, tun.height, tun.eps_ceil, tun.eps_wall, tun.sig_ceil, tun.sig_wall)
                     # loss = rt.raytrace_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), 2.4e9, xml_env)
                     if (loss == float("-inf")):
                         thpt = 0
@@ -417,6 +417,7 @@ def predict_node(map, c_map, scale, dropped, tx_pow, noise, onehop_thpt, xml_env
             if map[x,y] == 1:
                 best_sig = 0
                 best_node = None
+                best_onehop = 0
                 for n in dropped:
                     loss = calc_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), mine, scale, height, 2.4e9, tun.width, tun.height, tun.eps_ceil, tun.eps_wall, tun.sig_ceil, tun.sig_wall)
                     # loss = rt.raytrace_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), 2.4e9, xml_env)
@@ -426,13 +427,15 @@ def predict_node(map, c_map, scale, dropped, tx_pow, noise, onehop_thpt, xml_env
                         # loss = 10*log10(loss)
                         rx_pow = tx_pow + loss
                         rx_snr = rx_pow - noise
-                        thpt = bw * log2(1 + pow(10,(rx_snr / 10))) / pow(2, n.hops)
+                        thpt_onehop = bw * log2(1 + pow(10,(rx_snr / 10)))
+                        thpt = thpt_onehop / pow(2, n.hops)
 
                     if (thpt > best_sig):
                         best_sig = thpt
                         best_node = n
+                        best_onehop = thpt_onehop
                 
-                if best_sig >= onehop_thpt:
+                if best_onehop >= onehop_thpt:
                     c_map_new = np.zeros(np.shape(c_map))
                     for x2 in range(0,len(c_map_new)):
                         for y2 in range(0,len(c_map_new[x2])):
@@ -463,14 +466,14 @@ if __name__ == "__main__":
     c2 = (5+2+4*24,5+2+3*24)
 
     cases = [
-        ["ComplexRP_Case1", (19,205), 4,  4,  True],
-        ["ComplexRP_Case3", (19,205), 4,  4,  True],
-        ["ComplexRP_Case1", (19,205), 4, 10,  True],
+        # ["ComplexRP_Case1", (19,205), 4,  4,  True],
+        # ["ComplexRP_Case3", (19,205), 4,  4,  True],
         ["ComplexRP_Case3", (19,205), 4, 10,  True],
-        ["SimRig_Case1",    ( 7,101), 4,  4,  True],
-        ["SimRig_Case2",    ( 7,101), 4,  4,  True],
         ["SimRig_Case1",    ( 7,101), 4, 10,  True],
-        ["SimRig_Case2",    ( 7,101), 4, 10,  True]
+        ["ComplexRP_Case1", (19,205), 4, 10,  True],
+        # ["SimRig_Case1",    ( 7,101), 4,  4,  True],
+        # ["SimRig_Case2",    ( 7,101), 4,  4,  True],
+        # ["SimRig_Case2",    ( 7,101), 4, 10,  True]
     ]
 
     avg_thpt_fname = "./results/raytracing_coverage_averages.txt"

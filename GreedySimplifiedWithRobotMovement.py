@@ -36,6 +36,8 @@ def manhattan(p1, p2):
     return abs(p2[0] - p1[0]) + abs(p2[1] - p1[1])
 
 def has_los(p1:tuple, p2:tuple, map, scale):
+    if not (floor(p1[0] / scale) == floor(p2[0] / scale) or floor(p1[1] / scale) == floor(p2[1] / scale)):
+        return False
     px1 = (floor(p1[0] / scale), floor(p1[1] / scale))
     px2 = (floor(p2[0] / scale), floor(p2[1] / scale))
     rise = px2[1] - px1[1]
@@ -77,31 +79,28 @@ def has_los(p1:tuple, p2:tuple, map, scale):
 #     in dB
 # Returns result in dB
 def calc_loss(n1, n2, rf_prop:tuple, map, scale):
-    p1 = me.Point(n1[0],n1[1])
-    p2 = me.Point(n2[0],n2[1])
-
     if has_los(n1, n2, map, scale):
-        dist = p1.distance(p2)
+        dist = euclidean(n1, n2)
         return dist * rf_prop[0] + rf_prop[1]
     else:
-        dist = abs(p2.x - p1.x) + abs(p2.y - p1.y)
+        dist = manhattan(n1, n2)
         loss = dist * rf_prop[0] + rf_prop[1]
-        c1 = me.Point(p1.x, p2.y)
-        c2 = me.Point(p2.x, p1.y)
-        los_c1 = has_los((c1.x, c1.y), (p2.x, p2.y), map, scale) and has_los((c1.x, c1.y), (p1.x, p1.y), map, scale)
-        los_c2 = has_los((c2.x, c2.y), (p2.x, p2.y), map, scale) and has_los((c2.x, c2.y), (p1.x, p1.y), map, scale)
+        c1 = (n1[0], n2[1])
+        c2 = (n2[0], n1[1])
+        los_c1 = has_los(c1, n2, map, scale) and has_los(c1, n1, map, scale)
+        los_c2 = has_los(c2, n2, map, scale) and has_los(c2, n1, map, scale)
         if not (los_c1 or los_c2):
             return float("-inf")
+        elif (los_c1 and los_c2):
+            if euclidean(n2, c1) > euclidean(n2, c2):
+                c = c2
+            else:
+                c = c1
         elif (los_c1):
             c = c1
         elif (los_c2):
             c = c2
-        else:
-            if p1.distance(c1) > p1.distance(c2):
-                c = c2
-            else:
-                c = c1
-        dc = p1.distance(c)
+        dc = euclidean(n2,c)
         if dc > CORNER_THRESHOLD:
             return loss - CORNER_LOSS
         else:
@@ -299,7 +298,7 @@ def predict_node(map, c_map, scale, dropped, tx_pow, noise, onehop_thpt, rf_prop
     c_map = np.zeros(np.shape(map))
     for x in range(0,len(c_map)):
         for y in range(0,len(c_map[x])):
-            if (mine[x][y] == 1):
+            if (map[x][y] == 1):
                 best_thpt = 0
                 for n in dropped:
                     loss = calc_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), rf_prop, map, scale)
@@ -341,6 +340,7 @@ def predict_node(map, c_map, scale, dropped, tx_pow, noise, onehop_thpt, rf_prop
             if map[x,y] == 1:
                 best_sig = 0
                 best_node = None
+                best_onehop = 0
                 for n in dropped:
                     loss = calc_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), rf_prop, map, scale)
                     if (loss == float("-inf")):
@@ -348,13 +348,15 @@ def predict_node(map, c_map, scale, dropped, tx_pow, noise, onehop_thpt, rf_prop
                     else:
                         rx_pow = tx_pow + loss
                         rx_snr = rx_pow - noise
-                        thpt = bw * log2(1 + pow(10,(rx_snr / 10))) / pow(2, n.hops)
+                        thpt_onehop = bw * log2(1 + pow(10,(rx_snr / 10)))
+                        thpt = thpt_onehop / pow(2, n.hops)
 
                     if (thpt > best_sig):
                         best_sig = thpt
+                        best_onehop = thpt_onehop
                         best_node = n
                 
-                if best_sig >= onehop_thpt:
+                if best_onehop >= onehop_thpt:
                     c_map_new = np.zeros(np.shape(c_map))
                     for x2 in range(0,len(c_map_new)):
                         for y2 in range(0,len(c_map_new[x2])):
@@ -437,7 +439,9 @@ if __name__ == "__main__":
         slope_tun = me.Tunnel(me.Point(0, -2), me.Point(0, 602), tun_ref.width, tun_ref.height, tun_ref.eps_wall, tun_ref.sig_wall, tun_ref.eps_ceil, tun_ref.sig_ceil)
 
         slope, intercept = rt_slope.get_rtslope(slope_tun, 2.4e9, tun_ref.height/2)
-        slope *= 1.2
+        print("\tPath Loss Line: {}*d + {}".format(slope, intercept))
+        slope *= 1.1
+        intercept += 3.3
         l = me.Line(me.Point(0, intercept), me.Point(600, intercept + 600 * slope))
         print("\tPath Loss Line: {}*d + {}".format(slope, intercept))
 
@@ -460,6 +464,7 @@ if __name__ == "__main__":
         dropped_nodes = [rx_loc]
 
         cmap = np.zeros(np.shape(mine))
+        path_count = 1
 
         print("Starting Simulation")
         timer1 = time.time()
@@ -518,10 +523,31 @@ if __name__ == "__main__":
                                     # l = -1
                 if np.sum(mine) == sum_before_path:
                     break
-                
+            
             dropped_nodes.append(new_node)
             robot_loc = [floor(new_node.x / scale), floor(new_node.y / scale)]
             print("\tTook {}s to drop node".format(time.time() - timer2))
+            
+            # -----------------------------------------------------------------
+            # Save image of path
+            # -----------------------------------------------------------------
+            # path_map = np.repeat(mine[:,:,np.newaxis], 3, axis=2)
+            # for p in path:
+            #     path_map[p[0], p[1], 0] = 0
+            #     path_map[p[0], p[1], 1] = 0
+
+            # path_map[path[0][0], path[0][1], 0] = 1
+            # # path_map[path[0][0], p[0][1], 0] = 0
+            # # path_map[path[0][0], p[0][1], 0] = 1
+
+            # path_map[path[-1][0], path[-1][1], 0] = 1
+            # path_map[path[-1][0], path[-1][1], 1] = 0.5
+            # path_map[path[-1][0], path[-1][1], 2] = 0
+
+            # path_img = Image.fromarray(np.uint8(path_map.swapaxes(0,1) * 255))
+            # path_img.save("approx_{}_{}nodes_path{}.png".format(c[0],c[3],path_count))
+            # path_count += 1
+            # -----------------------------------------------------------------
 
             # -------------------------------------------------------------
             # Save image of new coverage map
@@ -549,7 +575,7 @@ if __name__ == "__main__":
 
         # Save observed map with the approximation method
         cmap = cmap / np.max(cmap)
-        cmap_inv = np.multiply(1 - cmap, obs_mine)
+        cmap_inv = np.multiply(1 - cmap, mine)
 
         image = np.dstack((cmap_inv, cmap, np.zeros(np.shape(cmap))))
 
@@ -592,6 +618,7 @@ if __name__ == "__main__":
                             if thpt > best_thpt:
                                 best_thpt = thpt
                         cmap[x][y] = best_thpt
+            # cmap = cmap * obs_mine
             cmap = cmap / np.max(cmap)
             cmap_inv = np.multiply(1 - cmap, obs_mine)
 
@@ -646,6 +673,7 @@ if __name__ == "__main__":
             for y in range(0,len(cmap[x])):
                 if (obs_mine[x][y] == 1):
                     best_thpt = 0
+                    best_onehop = 0
                     for n in dropped_nodes:
                         loss = rt_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), obs_mine, scale, height, 2.4e9, tun.width, tun.height, tun.eps_ceil, tun.eps_wall, tun.sig_ceil, tun.sig_wall)
                         # loss = rt.raytrace_loss(((x+0.5)*scale, (y+0.5)*scale, height), (n.x, n.y, n.h), 2.4e9, xml_env)
@@ -655,9 +683,12 @@ if __name__ == "__main__":
                             # loss = 10*log10(loss)
                             rx_pow = tx_pow + loss
                             rx_snr = rx_pow - noise
-                            thpt = bw * log2(1 + pow(10,(rx_snr / 10))) / pow(2, n.hops)
+                            thpt_onehop = bw * log2(1 + pow(10,(rx_snr / 10)))
+                            thpt = thpt_onehop / pow(2, n.hops)
                         if thpt > best_thpt:
                             best_thpt = thpt
+                            best_onehop = thpt_onehop
+                            
                     cmap[x][y] = best_thpt
         
         print("Saving average throughput")
@@ -667,7 +698,7 @@ if __name__ == "__main__":
             f = open(avg_thpt_fname, "w")
             # has_of_been_opened = True
         
-        f.write("{},nodes:{}nodes,discovery:{},{}\n".format(c[0],c[3],c[4], np.sum(cmap * obs_mine) / np.sum(obs_mine)))
+        f.write("{},nodes:{}nodes,discovery:{},{}\n".format(c[0],c[3],c[4], np.sum(np.multiply(cmap, obs_mine)) / np.sum(obs_mine)))
         f.close()
 
         # Save run times

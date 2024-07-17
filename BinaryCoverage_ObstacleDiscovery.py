@@ -37,6 +37,8 @@ def manhattan(p1, p2):
     return abs(p2[0] - p1[0]) + abs(p2[1] - p1[1])
 
 def has_los(p1:tuple, p2:tuple, map, scale):
+    if not (floor(p1[0] / scale) == floor(p2[0] / scale) or floor(p1[1] / scale) == floor(p2[1] / scale)):
+        return False
     px1 = (floor(p1[0] / scale), floor(p1[1] / scale))
     px2 = (floor(p2[0] / scale), floor(p2[1] / scale))
 
@@ -441,16 +443,6 @@ def predict_node(map, c_map, scale, dropped, c_range:tuple):
                     for x2 in range(0,len(c_map_new)):
                         for y2 in range(0,len(c_map_new[x2])):
                             if (map[x2, y2] == 1):
-                                # los = has_los(((x2+0.5)*scale, (y2+0.5)*scale, height), ((x+0.5)*scale, (y+0.5)*scale, height), map, scale)
-                                # inrange = sqrt(pow((x2+0.5)*scale - (x+0.5)*scale, 2) + pow((y2+0.5)*scale - (y+0.5)*scale, 2)) < c_range
-
-                                # loss = calc_loss(((x2+0.5)*scale, (y2+0.5)*scale, height), ((x+0.5)*scale, (y+0.5)*scale, height), rf_prop, map, scale)
-                                # if (loss == float("-inf")):
-                                #     thpt = 0
-                                # else:
-                                #     rx_pow = tx_pow + loss
-                                #     rx_snr = rx_pow - noise
-                                #     thpt = bw * log2(1 + pow(10,(rx_snr / 10))) / pow(2, best_node.hops + 1)
                                 los = has_los(((x2+0.5)*scale, (y2+0.5)*scale), ((x+0.5)*scale, (y+0.5)*scale), map, scale)
                                 if los and (x2 == x or y2 == y):
                                     inrange = sqrt(pow((x2+0.5)*scale - (x+0.5)*scale, 2) + pow((y2+0.5)*scale - (y+0.5)*scale, 2)) < c_range[0]
@@ -481,10 +473,6 @@ def predict_node(map, c_map, scale, dropped, c_range:tuple):
                                         area_tri += sqrt(sp * (sp - side_a) * (sp - side_b) * (sp - side_c))
                                         # area_tri += abs((dmnd[i][0] * (dmnd[j][1] - y_upscale) + dmnd[j][0] * (y_upscale - dmnd[i][1]) + x_upscale * (dmnd[i][1] - dmnd[j][1])) / 2)
 
-                                    # dx = sqrt(pow(c[1].x - c[0].x, 2) + pow(c[1].y - c[0].y, 2))
-                                    # dy = sqrt(pow(c[3].x - c[0].x, 2) + pow(c[3].y - c[0].y, 2))
-
-                                    # area_rect = dx * dy
                                     area_rect = 8*c_range[1]**2
 
                                     if area_tri <= area_rect + 0.000001:
@@ -595,6 +583,7 @@ if __name__ == "__main__":
         dropped_nodes = [rx_loc]
 
         cmap = np.zeros(np.shape(mine))
+        path_count = 1
 
         print("Starting Simulation")
         timer1 = time.time()
@@ -656,6 +645,24 @@ if __name__ == "__main__":
                 if np.sum(mine) == sum_before_path:
                     break
                 
+            path_map = np.repeat(mine[:,:,np.newaxis], 3, axis=2)
+            for p in path:
+                path_map[p[0], p[1], 0] = 0
+                path_map[p[0], p[1], 1] = 0
+
+            path_map[path[0][0], path[0][1], 0] = 1
+            # path_map[path[0][0], p[0][1], 0] = 0
+            # path_map[path[0][0], p[0][1], 0] = 1
+
+            path_map[path[-1][0], path[0][1], 0] = 1
+            path_map[path[-1][0], path[0][1], 0] = 0.5
+            path_map[path[-1][0], path[0][1], 0] = 0
+
+            path_map = np.swapaxes(path_map, 0, 1)
+            path_img = Image.fromarray(path_map * 255)
+            path_img.save("binary_{}_{}nodes_path{}".format(c[0],c[3],path_count))
+            path_count += 1
+
             dropped_nodes.append(new_node)
             robot_loc = [floor(new_node.x / scale), floor(new_node.y / scale)]
             print("\tTook {}s to drop node".format(time.time() - timer2))
@@ -832,7 +839,7 @@ if __name__ == "__main__":
             f = open(avg_thpt_fname, "w")
             has_of_been_opened = True
         
-        f.write("{},nodes:{},discovery:{},{}\n".format(c[0],c[3],c[4], np.sum(cmap * obs_mine) / np.sum(obs_mine)))
+        f.write("{},nodes:{},discovery:{},{}\n".format(c[0],c[3],c[4], np.sum(np.multiply(cmap, obs_mine)) / np.sum(obs_mine)))
         f.close()
 
         # Save run times

@@ -1,11 +1,18 @@
 <mine lower_bound="(0,0)" upper_bound = "(261, 133)">
     <!-- <tunnel p1="(5,5)" p2="(153,153)" width="4" height="2" eps_ceil = "8.9" sig_ceil = "0.15" eps_wall = "8.9" sig_wall = "0.15" /> -->
     
+    <!-- <obstacle>
+        <corner p="(80, 0)" />
+        <corner p="(80, 90)" />
+        <corner p="(130, 90)" />
+        <corner p="(130, 0)" />
+    </obstacle> -->
+
     <obstacle>
-        <corner p="(60, 82)" />
-        <corner p="(60, 130)" />
-        <corner p="(200, 130)" />
-        <corner p="(200, 82)" />
+        <corner p="(50, 90)" />
+        <corner p="(50, 114)" />
+        <corner p="(130, 114)" />
+        <corner p="(130, 90)" />
     </obstacle>
 
     <!-- Lower Vertical -->
