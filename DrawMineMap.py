@@ -1,3 +1,5 @@
+import sys
+sys.path.append('C:\\Users\\padwo\\OneDrive\\Documents\\School\\Grad\\NIOSH\\python_sim')
 import loadmap as me
 from PIL import Image
 import numpy as np
@@ -5,7 +7,7 @@ import numpy as np
 scale = 4
 
 env = me.Environment()
-env.load("ComplexRP.xml")
+env.load("C:\\Users\\padwo\\OneDrive\\Documents\\School\\Grad\\NIOSH\\python_sim\\ComplexRP.xml")
 mine = env.draw_obstacle_bitmap(scale)
 
 mine_img = np.repeat(mine[:,:,np.newaxis], 3, axis=2)
